@@ -1,0 +1,3 @@
+<launch>
+  <node pkg="seapath_gnss_ros_driver" type="seapath_gnss_ros_driver_node" name="seapath_gnss_ros_driver_node" output="screen"/>
+</launch>

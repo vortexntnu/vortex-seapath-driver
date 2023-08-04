@@ -1,0 +1,3 @@
+<launch>
+  <node pkg="mru_ros_driver" type="mru_ros_driver_node" name="mru_ros_driver_node" output="screen"/>
+</launch>
