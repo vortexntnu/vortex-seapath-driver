@@ -2,6 +2,8 @@
 
 SeaPathRosDriver::SeaPathRosDriver(ros::NodeHandle nh, const char* UDP_IP, const int UDP_PORT) : nh{nh}, seaPathSocket(UDP_IP, UDP_PORT) {
     nav_pub = nh.advertise<sensor_msgs::NavSatFix>("/sensor/gnss", 10);
+    pos_pub = nh.advertise<geometry_msgs::PoseWithCovarianceStamped>("/sensor/position", 10);
+
 }
 
 SeapathData SeaPathRosDriver::getSeapathData() {
@@ -44,6 +46,8 @@ SeapathData SeaPathRosDriver::parseNmeaData(std::string nmea_data) {
             }
 
             auto [n, e] = displacement_wgs84(seapath_data.north, seapath_data.east);
+            seapath_data.x_displacement = n;
+            seapath_data.y_displacement = e;
             //std::cout << "N [m]: " << n << " \t E [m]: " << e << std::endl;
         }
 
@@ -99,10 +103,11 @@ void SeaPathRosDriver::publish(SeapathData data) {
     sensor_msgs::NavSatFix msg;
     double epsilon = 1e-9;
     if (abs(data.north) < epsilon || abs(data.east) < epsilon || abs(data.north_sigma) < epsilon) {
+        ROS_WARN("Invalid Seapath GNSS data received, skipping...");
         return; // do not publish zero msgs
     }
 
-    msg.header.frame_id = "gps0";
+    msg.header.frame_id = "gnss";
     msg.header.stamp = ros::Time::now();
 
     msg.latitude = data.north;
@@ -116,6 +121,19 @@ void SeaPathRosDriver::publish(SeapathData data) {
     msg.position_covariance_type = sensor_msgs::NavSatFix::COVARIANCE_TYPE_DIAGONAL_KNOWN;
 
     nav_pub.publish(msg);
+
+    // ENU!!!!
+    geometry_msgs::PoseWithCovarianceStamped pose_msg;
+    pose_msg.header.frame_id = "gnss";
+    pose_msg.header.stamp = ros::Time::now();
+
+    pose_msg.pose.pose.position.x = data.y_displacement;
+    pose_msg.pose.pose.position.y = data.x_displacement;
+
+    pose_msg.pose.covariance[7] = data.north_sigma * data.north_sigma;
+    pose_msg.pose.covariance[0] = data.east_sigma * data.east_sigma;
+
+    pos_pub.publish(pose_msg);
 }
 
 std::pair<double, double> SeaPathRosDriver::displacement_wgs84(double north, double east) {

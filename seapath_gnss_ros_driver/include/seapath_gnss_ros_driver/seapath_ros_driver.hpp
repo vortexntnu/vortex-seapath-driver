@@ -8,6 +8,8 @@
 
 #include "ros/ros.h"
 #include <sensor_msgs/NavSatFix.h>
+#include <geometry_msgs/PoseWithCovarianceStamped.h>
+
 
 #include "seapath_gnss_ros_driver/seapath_socket.hpp"
 
@@ -27,6 +29,9 @@ struct SeapathData {
     double cog_rad = 0.0;
 
     double rot = 0.0;
+
+    double x_displacement = 0.0;
+    double y_displacement = 0.0;
 };
 
 class SeaPathRosDriver {
@@ -43,6 +48,7 @@ private:
     SeapathData parseNmeaData(std::string nmea_data);
 
     ros::Publisher nav_pub;
+    ros::Publisher pos_pub;
 
     std::pair<double, double> displacement_wgs84(double north, double east);
     double convert_dms_to_dd(double dms);
