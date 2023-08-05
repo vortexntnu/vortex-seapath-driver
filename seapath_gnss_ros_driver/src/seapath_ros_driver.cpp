@@ -2,7 +2,7 @@
 
 SeaPathRosDriver::SeaPathRosDriver(ros::NodeHandle nh, const char* UDP_IP, const int UDP_PORT) : nh{nh}, seaPathSocket(UDP_IP, UDP_PORT) {
     nav_pub = nh.advertise<sensor_msgs::NavSatFix>("/sensor/gnss", 10);
-    pos_pub = nh.advertise<geometry_msgs::PoseWithCovarianceStamped>("/sensor/position", 10);
+    odom_pub = nh.advertise<nav_msgs::Odometry>("/sensor/gnss/odom", 10);
 
 }
 
@@ -102,8 +102,8 @@ SeapathData SeaPathRosDriver::parseNmeaData(std::string nmea_data) {
 void SeaPathRosDriver::publish(SeapathData data) {
     sensor_msgs::NavSatFix msg;
     double epsilon = 1e-9;
-    if (abs(data.north) < epsilon || abs(data.east) < epsilon || abs(data.north_sigma) < epsilon) {
-        ROS_WARN("Invalid Seapath GNSS data received, skipping...");
+    if (abs(data.north) < epsilon || abs(data.east) < epsilon) {
+        ROS_WARN("Invalid Seapath GNSS data received, skipping...\nData values: north=%f, east=%f", data.north, data.east);
         return; // do not publish zero msgs
     }
 
@@ -123,17 +123,18 @@ void SeaPathRosDriver::publish(SeapathData data) {
     nav_pub.publish(msg);
 
     // ENU!!!!
-    geometry_msgs::PoseWithCovarianceStamped pose_msg;
-    pose_msg.header.frame_id = "gnss";
-    pose_msg.header.stamp = ros::Time::now();
+    double sigma_floor = 1e-7;
+    nav_msgs::Odometry odometry_msg;
+    odometry_msg.header.frame_id = "gnss";
+    odometry_msg.header.stamp = ros::Time::now();
 
-    pose_msg.pose.pose.position.x = data.y_displacement;
-    pose_msg.pose.pose.position.y = data.x_displacement;
+    odometry_msg.pose.pose.position.x = data.y_displacement;
+    odometry_msg.pose.pose.position.y = data.x_displacement;
 
-    pose_msg.pose.covariance[7] = data.north_sigma * data.north_sigma;
-    pose_msg.pose.covariance[0] = data.east_sigma * data.east_sigma;
+    odometry_msg.pose.covariance[0] = sigma_floor; //data.north_sigma * data.north_sigma + sigma_floor; // X variance
+    odometry_msg.pose.covariance[7] = sigma_floor; //data.east_sigma * data.east_sigma + sigma_floor;   // Y variance
 
-    pos_pub.publish(pose_msg);
+    odom_pub.publish(odometry_msg);
 }
 
 std::pair<double, double> SeaPathRosDriver::displacement_wgs84(double north, double east) {

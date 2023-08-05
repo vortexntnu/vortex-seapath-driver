@@ -1,7 +1,8 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(seapath_gnss_ros_driver)
+project(seapath_data_fusion)
 
-add_compile_options(-std=c++17)
+## Compile as C++11, supported in ROS Kinetic and newer
+add_compile_options(-std=c++14)
 
 ## Find catkin macros and libraries
 find_package(catkin REQUIRED COMPONENTS
@@ -9,7 +10,11 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   sensor_msgs
   nav_msgs
+  tf2
+  tf2_ros
 )
+
+find_package(Eigen3 REQUIRED)
 
 ###################################
 ## catkin specific configuration ##
@@ -22,14 +27,13 @@ catkin_package(
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
+  ${EIGEN3_INCLUDE_DIR}
 )
 
 ## Declare a C++ executable
 add_executable(
     ${PROJECT_NAME}_node
-    src/seapath_ros_node.cpp
-    src/seapath_ros_driver.cpp
-    src/seapath_socket.cpp)
+    src/main.cpp)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(${PROJECT_NAME}_node

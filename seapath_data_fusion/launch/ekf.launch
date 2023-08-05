@@ -1,0 +1,3 @@
+<launch>
+  <node pkg="seapath_data_fusion" type="seapath_data_fusion_node" name="seapath_data_fusion_node" output="screen"/>
+</launch>

@@ -51,21 +51,22 @@ void MRURosDriver::publishData(const SensorData& data) {
     msg.orientation.y = q.y();
     msg.orientation.z = q.z();
     msg.orientation.w = q.w();
-    double datasheet_rp_variance = 0.000000761;
+    double noise_injection_ratio = 1.0; //1000000.0;
+    double datasheet_rp_variance = 0.000000761 * noise_injection_ratio;
     msg.orientation_covariance = {datasheet_rp_variance, 0, 0, 0, datasheet_rp_variance, 0, 0, 0, 0.01};
 
     // Convert the angular velocity from NED to ENU
     msg.angular_velocity.x = -data.angular_rate_pitch;  // ENU: x->-y, y->x, z->-z
     msg.angular_velocity.y = data.angular_rate_roll;
     msg.angular_velocity.z = -data.angular_rate_yaw;
-    double datasheet_avel_variance = 0.000000190;
+    double datasheet_avel_variance = 0.000000190 * noise_injection_ratio;
     msg.angular_velocity_covariance = {datasheet_avel_variance, 0, 0, 0, datasheet_avel_variance, 0, 0, 0, datasheet_avel_variance};
 
     // Convert the linear acceleration from NED to ENU
     msg.linear_acceleration.x = -data.lin_acc_pitch;  // ENU: x->-y, y->x, z->-z
     msg.linear_acceleration.y = data.lin_acc_roll;
     msg.linear_acceleration.z = -data.lin_acc_yaw;
-    double estimated_lin_covariance = 0.000001;
+    double estimated_lin_covariance = 0.000001 * noise_injection_ratio;
     msg.linear_acceleration_covariance = {estimated_lin_covariance, 0, 0, 0, estimated_lin_covariance, 0, 0, 0, estimated_lin_covariance};
 
     pub.publish(msg);

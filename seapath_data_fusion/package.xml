@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>seapath_gnss_ros_driver</name>
+  <name>seapath_data_fusion</name>
   <version>0.0.0</version>
-  <description>The seapath_gnss_ros_driver package</description>
+  <description>The seapath_data_fusion package</description>
 
   <maintainer email="detoxte@gmail.com">Christopher Strøm</maintainer>
   <license>MIT</license>
@@ -12,11 +12,9 @@
   <build_depend>roscpp</build_depend>
   <build_depend>std_msgs</build_depend>
   <build_depend>sensor_msgs</build_depend>
-  <build_depend>nav_msgs</build_depend>
-
 
   <exec_depend>roscpp</exec_depend>
   <exec_depend>std_msgs</exec_depend>
   <exec_depend>sensor_msgs</exec_depend>
-  <exec_depend>nav_msgs</exec_depend>
+  
 </package>
