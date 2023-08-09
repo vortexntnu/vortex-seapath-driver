@@ -22,7 +22,7 @@ void MRURosDriver::publishData(const SensorData& data) {
     {
         // Accumulate measurements
         sum_angular_velocity += tf::Vector3(data.angular_rate_roll, data.angular_rate_pitch, data.angular_rate_yaw);
-        sum_linear_accel += tf::Vector3(data.lin_acc_roll, data.lin_acc_pitch, data.lin_acc_yaw);
+        sum_linear_accel += tf::Vector3(data.lin_acc_x, data.lin_acc_y, data.lin_acc_z);
         calibration_sample_counter++;
 
         // If enough samples are collected
@@ -73,9 +73,9 @@ void MRURosDriver::publishData(const SensorData& data) {
     double datasheet_avel_variance = 0.000000190;
     msg.angular_velocity_covariance = {datasheet_avel_variance, 0, 0, 0, datasheet_avel_variance, 0, 0, 0, datasheet_avel_variance};
 
-    msg.linear_acceleration.x = data.lin_acc_roll - accel_bias_x;
-    msg.linear_acceleration.y = data.lin_acc_pitch - accel_bias_y;
-    msg.linear_acceleration.z = data.lin_acc_yaw - accel_bias_z;
+    msg.linear_acceleration.x = data.lin_acc_x - accel_bias_x;
+    msg.linear_acceleration.y = data.lin_acc_y - accel_bias_y;
+    msg.linear_acceleration.z = data.lin_acc_z - accel_bias_z;
     double estimated_lin_covariance = 0.000001;
     msg.linear_acceleration_covariance = {estimated_lin_covariance, 0, 0, 0, estimated_lin_covariance, 0, 0, 0, estimated_lin_covariance};
 

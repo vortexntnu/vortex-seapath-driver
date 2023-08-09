@@ -15,12 +15,12 @@ public:
     double angular_rate_roll;
     double angular_rate_pitch;
     double angular_rate_yaw;
-    double lin_acc_roll;
-    double lin_acc_pitch;
-    double lin_acc_yaw;
+    double lin_acc_x;
+    double lin_acc_y;
+    double lin_acc_z;
 
-    SensorData(double r, double p, double y, double arr, double arp, double ary, double lar, double lap, double lay)
-    : roll(r), pitch(p), yaw(y), angular_rate_roll(arr), angular_rate_pitch(arp), angular_rate_yaw(ary), lin_acc_roll(lar), lin_acc_pitch(lap), lin_acc_yaw(lay) {}
+    SensorData(double r, double p, double y, double arr, double arp, double ary, double lax, double lay, double laz)
+    : roll(r), pitch(p), yaw(y), angular_rate_roll(arr), angular_rate_pitch(arp), angular_rate_yaw(ary), lin_acc_x(lax), lin_acc_y(lay), lin_acc_z(laz) {}
 };
 
 SensorData receiveNMEA(int sockfd, struct sockaddr_in& cliaddr);
