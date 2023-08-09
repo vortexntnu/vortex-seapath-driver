@@ -1,10 +1,10 @@
 # The frequency, in Hz, at which the filter will output a position estimate. Note that the filter will not begin
 # computation until it receives at least one message from one of the inputs. It will then run continuously at the
 # frequency specified here, regardless of whether it receives more measurements. Defaults to 30 if unspecified.
-frequency: 30
+frequency: 5
 
-# smooth_lagged_data: true
-# history_length: 3 
+smooth_lagged_data: true
+history_length: 3 
 
 silent_tf_failure: false
 
@@ -54,42 +54,62 @@ base_link_frame: base_link  # Defaults to "base_link" if unspecified
 world_frame: odom           # Defaults to the value of odom_frame if unspecified
 
 
+# Config tables are:
+
+#[x,     y,      z, 
+# roll,  pitch,  yaw,
+# vx,    vy,     vz,
+# vroll, vpitch, vyaw,
+# ax,    ay,     az]
+
 
 ##  MiniMRU 40 
-imu0: sensor/mru
-imu0_config: [false, false, false,
-              true, true, true,
-              false, false, false,
-              true, true, true,
-              true, true, true]
-imu0_nodelay: false
-imu0_differential: false
-imu0_relative: false
-imu0_queue_size: 10
-#imu0_pose_rejection_threshold: 0.8                 
-#imu0_twist_rejection_threshold: 0.8                
-imu0_linear_acceleration_rejection_threshold: 0.8  
-imu0_remove_gravitational_acceleration: false
+# imu0: sensor/mru
+# imu0_config: [false, false, false,
+#               false, false, false,
+#               false, false, false,
+#               true, true, true,
+#               true, true, true]
+# imu0_nodelay: false
+# imu0_differential: false
+# imu0_relative: false
+# imu0_queue_size: 10
+# #imu0_pose_rejection_threshold: 0.8                 
+# #imu0_twist_rejection_threshold: 0.8                
+# imu0_linear_acceleration_rejection_threshold: 0.8  
+# imu0_remove_gravitational_acceleration: false
 
-# Seapath 13x GNSS
-odom0: sensor/gnss/odom
-odom0_config: [true, true, false,
+# Seapath 130
+pose0: sensor/seapath/pose/enu
+pose0_config: [true, true, true,
                false, false, false,
                false, false, false,
                false, false, false,
                false, false, false]
-odom0_differential: false
-odom0_relative: false
-odom0_queue_size: 5
-# #odom0_pose_rejection_threshold: 2
-# #odom0_twist_rejection_threshold: 0.2
-odom0_nodelay: false
+pose0_differential: false
+pose0_relative: false
+pose0_queue_size: 5
+#pose0_pose_rejection_threshold: 10
+# #pose0_twist_rejection_threshold: 0.2
+pose0_nodelay: false
+
+twist0: sensor/seapath/twist/enu
+twist0_config: [false, false, false,
+               false, false, false,
+               true, true, true,
+               true, true, true,
+               false, false, false]
+twist0_differential: false
+twist0_relative: false
+twist0_queue_size: 5
+#twist0_pose_rejection_threshold: 10
+# #twist0_twist_rejection_threshold: 0.2
+twist0_nodelay: false
 
 
-
-process_noise_covariance: [10.0, 0,    0,    0,    0,    0,    0,     0,     0,    0,    0,    0,    0,    0,    0,
-                           0,    10.0, 0,    0,    0,    0,    0,     0,     0,    0,    0,    0,    0,    0,    0,
-                           0,    0,    1.0, 0,    0,    0,    0,     0,     0,    0,    0,    0,    0,    0,    0,
+process_noise_covariance: [0.1, 0,    0,    0,    0,    0,    0,     0,     0,    0,    0,    0,    0,    0,    0,
+                           0,    0.1, 0,    0,    0,    0,    0,     0,     0,    0,    0,    0,    0,    0,    0,
+                           0,    0,    0.1, 0,    0,    0,    0,     0,     0,    0,    0,    0,    0,    0,    0,
                            0,    0,    0,    0.3, 0,    0,    0,     0,     0,    0,    0,    0,    0,    0,    0,
                            0,    0,    0,    0,    0.3, 0,    0,     0,     0,    0,    0,    0,    0,    0,    0,
                            0,    0,    0,    0,    0,    0.6, 0,     0,     0,    0,    0,    0,    0,    0,    0,
@@ -103,9 +123,9 @@ process_noise_covariance: [10.0, 0,    0,    0,    0,    0,    0,     0,     0, 
                            0,    0,    0,    0,    0,    0,    0,     0,     0,    0,    0,    0,    0,    0.1, 0,
                            0,    0,    0,    0,    0,    0,    0,     0,     0,    0,    0,    0,    0,    0,    0.015]
 
-initial_estimate_covariance: [1e-9, 0,    0,    0,    0,    0,    0,    0,    0,    0,     0,     0,     0,    0,    0,
-                              0,    1e-9, 0,    0,    0,    0,    0,    0,    0,    0,     0,     0,     0,    0,    0,
-                              0,    0,    1e-9, 0,    0,    0,    0,    0,    0,    0,     0,     0,     0,    0,    0,
+initial_estimate_covariance: [1e-4, 0,    0,    0,    0,    0,    0,    0,    0,    0,     0,     0,     0,    0,    0,
+                              0,    1e-4, 0,    0,    0,    0,    0,    0,    0,    0,     0,     0,     0,    0,    0,
+                              0,    0,    1e-4, 0,    0,    0,    0,    0,    0,    0,     0,     0,     0,    0,    0,
                               0,    0,    0,    1e-9, 0,    0,    0,    0,    0,    0,     0,     0,     0,    0,    0,
                               0,    0,    0,    0,    1e-9, 0,    0,    0,    0,    0,     0,     0,     0,    0,    0,
                               0,    0,    0,    0,    0,    1e-9, 0,    0,    0,    0,     0,     0,     0,    0,    0,
