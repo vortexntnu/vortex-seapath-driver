@@ -23,10 +23,9 @@ SeaPathSocket::~SeaPathSocket() {
     close(sockfd);
 }
 
-std::string SeaPathSocket::receiveData() {
-    char buffer[1024];
+std::vector<uint8_t> SeaPathSocket::receiveData() {
+    uint8_t buffer[1024];
     int len = sizeof(cliaddr);
-    int n = recvfrom(sockfd, (char *)buffer, sizeof(buffer), MSG_WAITALL, (struct sockaddr *) &cliaddr, (socklen_t *)&len);
-    buffer[n] = '\0';
-    return std::string(buffer);
+    int n = recvfrom(sockfd, buffer, sizeof(buffer), MSG_WAITALL, (struct sockaddr *) &cliaddr, (socklen_t *)&len);
+    return std::vector<uint8_t>(buffer, buffer + n);
 }

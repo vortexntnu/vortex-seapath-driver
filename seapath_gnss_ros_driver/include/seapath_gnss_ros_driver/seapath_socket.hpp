@@ -7,13 +7,14 @@
 #include <string>
 #include <cstring>
 #include <unistd.h>
+#include <vector>
 
 
 class SeaPathSocket {
 public:
     SeaPathSocket(const char* UDP_IP, const int UDP_PORT);
     ~SeaPathSocket();
-    std::string receiveData();
+    std::vector<uint8_t> receiveData();
 
 private:
     int sockfd;

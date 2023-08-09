@@ -1,140 +1,140 @@
 #include "seapath_gnss_ros_driver/seapath_ros_driver.hpp"
 
+geometry_msgs::PoseWithCovarianceStamped SeaPathRosDriver::toPoseWithCovarianceStamped(const KMBinaryData& data) {
+    geometry_msgs::PoseWithCovarianceStamped pose_msg;
+
+    pose_msg.header.stamp = ros::Time::now();
+    pose_msg.header.frame_id = "gnss"; 
+
+    float north = data.latitude;
+    float east = data.longitude;
+    float height = data.ellipsoid_height;
+
+    if(ORIGIN_N == -100 && ORIGIN_E == -100 && ORIGIN_H == -100) {
+        ROS_INFO_STREAM("Setting global origin to: " << north << ", " << east << "\n");
+        ORIGIN_N = north;
+        ORIGIN_E = east;
+        ORIGIN_H = height;
+    }
+
+    auto xy = displacement_wgs84(north, east);
+
+    pose_msg.pose.pose.position.x = xy.first;
+    pose_msg.pose.pose.position.y = xy.second;
+    pose_msg.pose.pose.position.z = height - ORIGIN_H;
+
+    tf::Quaternion q = tf::createQuaternionFromRPY(data.roll, data.pitch, data.heading);
+    pose_msg.pose.pose.orientation.x = q.x();
+    pose_msg.pose.pose.orientation.y = q.y();
+    pose_msg.pose.pose.orientation.z = q.z();
+    pose_msg.pose.pose.orientation.w = q.w();
+
+    pose_msg.pose.covariance[0] = data.longitude_error * data.longitude_error;
+    pose_msg.pose.covariance[7] = data.latitude_error * data.latitude_error;
+    pose_msg.pose.covariance[14] = data.height_error * data.height_error;
+    pose_msg.pose.covariance[21] = data.roll_error * data.roll_error;
+    pose_msg.pose.covariance[28] = data.pitch_error * data.pitch_error;
+    pose_msg.pose.covariance[35] = data.heading_error * data.heading_error;
+
+    return pose_msg;
+}
+
+geometry_msgs::TwistWithCovarianceStamped SeaPathRosDriver::toTwistWithCovarianceStamped(const KMBinaryData& data) {
+    geometry_msgs::TwistWithCovarianceStamped twist_msg;
+
+    twist_msg.header.stamp = ros::Time::now();
+    twist_msg.header.frame_id = "gnss";
+
+    twist_msg.twist.twist.linear.x = data.north_velocity;
+    twist_msg.twist.twist.linear.y = data.east_velocity;
+    twist_msg.twist.twist.linear.z = data.down_velocity;
+
+    twist_msg.twist.twist.angular.x = data.roll_rate;
+    twist_msg.twist.twist.angular.y = data.pitch_rate;
+    twist_msg.twist.twist.angular.z = data.yaw_rate;
+
+    twist_msg.twist.covariance[0] = data.latitude_error * data.latitude_error;
+    twist_msg.twist.covariance[7] = data.longitude_error * data.longitude_error;
+    twist_msg.twist.covariance[14] = data.height_error * data.height_error; 
+
+
+    // Temp hack to avoid inf in covariance
+    if (data.heading_error > 10.0) {
+        twist_msg.twist.covariance[35] = 10.0;
+    } else {
+        twist_msg.twist.covariance[35] = data.heading_error * data.heading_error;
+    }
+    twist_msg.twist.covariance[21] = data.roll_error * data.roll_error; 
+    twist_msg.twist.covariance[28] = data.pitch_error * data.pitch_error;  
+
+    return twist_msg;
+}
+
 SeaPathRosDriver::SeaPathRosDriver(ros::NodeHandle nh, const char* UDP_IP, const int UDP_PORT) : nh{nh}, seaPathSocket(UDP_IP, UDP_PORT) {
     nav_pub = nh.advertise<sensor_msgs::NavSatFix>("/sensor/gnss", 10);
-    odom_pub = nh.advertise<nav_msgs::Odometry>("/sensor/gnss/odom", 10);
+    pose_pub = nh.advertise<geometry_msgs::PoseWithCovarianceStamped>("/sensor/seapath/pose/ned", 10);
+    twist_pub = nh.advertise<geometry_msgs::TwistWithCovarianceStamped>("/sensor/seapath/twist/ned", 10);
 
 }
 
-SeapathData SeaPathRosDriver::getSeapathData() {
-    std::string nmea_data = seaPathSocket.receiveData();
-    return parseNmeaData(nmea_data);
+KMBinaryData SeaPathRosDriver::getKMBinaryData() {
+    std::vector<uint8_t> data = seaPathSocket.receiveData();
+    return parseKMBinaryData(data);
 }
 
-SeapathData SeaPathRosDriver::parseNmeaData(std::string nmea_data) {
-    SeapathData seapath_data;
-    std::istringstream dataStream(nmea_data);
-    std::string sentence;
+KMBinaryData SeaPathRosDriver::parseKMBinaryData(std::vector<uint8_t> data) {
+    KMBinaryData result;
+    size_t offset = 0;
 
-    while (getline(dataStream, sentence, '\n')) {
-        std::string data = sentence.substr(1, sentence.find('*') - 1);
-        std::vector<std::string> parts;
-        std::string part;
-        std::istringstream partStream(data);
-        while (getline(partStream, part, ',')) {
-            parts.push_back(part);
-        }
+    // Helper lambda to copy data and update the offset
+    auto copyData = [&data, &offset](void* dest, size_t size) {
+        std::memcpy(dest, data.data() + offset, size);
+        offset += size;
+    };
 
-        if (parts[0] == "INGGA") { // GNSS fix
+    copyData(result.start_id, 4);
+    copyData(&result.dgm_length, 2);
+    copyData(&result.dgm_version, 2);
+    copyData(&result.utc_seconds, 4);
+    copyData(&result.utc_nanoseconds, 4);
+    copyData(&result.status, 4);
+    copyData(&result.latitude, 8);
+    copyData(&result.longitude, 8);
+    copyData(&result.ellipsoid_height, 4);
+    copyData(&result.roll, 4);
+    copyData(&result.pitch, 4);
+    copyData(&result.heading, 4);
+    copyData(&result.heave, 4);
+    copyData(&result.roll_rate, 4);
+    copyData(&result.pitch_rate, 4);
+    copyData(&result.yaw_rate, 4);
+    copyData(&result.north_velocity, 4);
+    copyData(&result.east_velocity, 4);
+    copyData(&result.down_velocity, 4);
+    copyData(&result.latitude_error, 4);
+    copyData(&result.longitude_error, 4);
+    copyData(&result.height_error, 4);
+    copyData(&result.roll_error, 4);
+    copyData(&result.pitch_error, 4);
+    copyData(&result.heading_error, 4);
+    copyData(&result.heave_error, 4);
+    copyData(&result.north_acceleration, 4);
+    copyData(&result.east_acceleration, 4);
+    copyData(&result.down_acceleration, 4);
+    copyData(&result.delayed_heave_utc_seconds, 4);
+    copyData(&result.delayed_heave_utc_nanoseconds, 4);
+    copyData(&result.delayed_heave, 4);
 
-            if(parts[2].empty() || parts[4].empty() || parts[9].empty()) {
-                continue;
-            }
-
-            std::string north = parts[2];
-            std::string east = parts[4];
-            std::string altitude = parts[9];
-
-
-            seapath_data.north = convert_dms_to_dd(std::stod(north));
-            seapath_data.east = convert_dms_to_dd(std::stod(east));
-            seapath_data.altitude = std::stod(altitude);
-
-            if (ORIGIN_N == 0.0) {
-                ORIGIN_N = seapath_data.north;
-                ORIGIN_E = seapath_data.east;
-            }
-
-            auto [n, e] = displacement_wgs84(seapath_data.north, seapath_data.east);
-            seapath_data.x_displacement = n;
-            seapath_data.y_displacement = e;
-            //std::cout << "N [m]: " << n << " \t E [m]: " << e << std::endl;
-        }
-
-        if (parts[0] == "INHDT") { // True heading
-            if(parts[1].empty()) {
-                continue;
-            }
-
-            std::string true_north_heading = parts[1];
-
-            seapath_data.heading = std::stod(true_north_heading);
-        }
-
-        if (parts[0] == "INVTG") { // Course over ground and speed over ground
-            if(parts[1].empty() || parts[7].empty()) {
-                continue;
-            }
-            std::string ground_speed_mps = parts[7];
-            std::string ground_course_rad = parts[1];
-
-            seapath_data.sog_mps = std::round(std::stod(ground_speed_mps) * 1000.0 / 3600.0 * 1e6) / 1e6;
-            seapath_data.cog_rad = std::round(std::stod(ground_course_rad) * 2 * M_PI / 360.0 * 1e6) / 1e6;
-        }
-
-        if (parts[0] == "GNGST") { // GNSS pseudorange error statistics
-            if (parts[6].empty() || parts[7].empty() || parts[8].empty()) {
-                continue;
-            }
-
-            std::string sigma_lat = parts[6];
-            std::string sigma_lon = parts[7];
-            std::string sigma_alt = parts[8];
-
-            seapath_data.north_sigma = std::stod(sigma_lat);
-            seapath_data.east_sigma = std::stod(sigma_lon);
-            seapath_data.altitude_sigma = std::stod(sigma_alt);
-        }
-
-        if (parts[0] == "INROT") { // Rate of turn
-            if(parts[1].empty()) {
-                continue;
-            }
-            std::string rate_of_turn = parts[1];
-
-            seapath_data.rot = std::stod(rate_of_turn);
-        }
-    }
-
-    return seapath_data;
+    return result;
 }
 
-void SeaPathRosDriver::publish(SeapathData data) {
-    sensor_msgs::NavSatFix msg;
-    double epsilon = 1e-9;
-    if (abs(data.north) < epsilon || abs(data.east) < epsilon) {
-        ROS_WARN("Invalid Seapath GNSS data received, skipping...\nData values: north=%f, east=%f", data.north, data.east);
-        return; // do not publish zero msgs
-    }
 
-    msg.header.frame_id = "gnss";
-    msg.header.stamp = ros::Time::now();
+void SeaPathRosDriver::publish(KMBinaryData data) {
+    auto pose = toPoseWithCovarianceStamped(data);
+    auto twist = toTwistWithCovarianceStamped(data);
 
-    msg.latitude = data.north;
-    msg.longitude = data.east;
-    msg.altitude = data.altitude;
-
-    msg.position_covariance[0] = data.north_sigma * data.north_sigma;
-    msg.position_covariance[4] = data.east_sigma * data.east_sigma;
-    msg.position_covariance[8] = data.altitude_sigma * data.altitude_sigma;
-
-    msg.position_covariance_type = sensor_msgs::NavSatFix::COVARIANCE_TYPE_DIAGONAL_KNOWN;
-
-    nav_pub.publish(msg);
-
-    // ENU!!!!
-    double sigma_floor = 1e-7;
-    nav_msgs::Odometry odometry_msg;
-    odometry_msg.header.frame_id = "gnss";
-    odometry_msg.header.stamp = ros::Time::now();
-
-    odometry_msg.pose.pose.position.x = data.y_displacement;
-    odometry_msg.pose.pose.position.y = data.x_displacement;
-
-    odometry_msg.pose.covariance[0] = sigma_floor; //data.north_sigma * data.north_sigma + sigma_floor; // X variance
-    odometry_msg.pose.covariance[7] = sigma_floor; //data.east_sigma * data.east_sigma + sigma_floor;   // Y variance
-
-    odom_pub.publish(odometry_msg);
+    pose_pub.publish(pose);
+    twist_pub.publish(twist);
 }
 
 std::pair<double, double> SeaPathRosDriver::displacement_wgs84(double north, double east) {
