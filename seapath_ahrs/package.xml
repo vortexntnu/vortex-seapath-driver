@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>seapath_data_fusion</name>
+  <name>seapath_ahrs</name>
   <version>0.0.0</version>
-  <description>The seapath_data_fusion package</description>
+  <description>The seapath_ahrs package</description>
 
   <maintainer email="detoxte@gmail.com">Christopher Strøm</maintainer>
   <license>MIT</license>

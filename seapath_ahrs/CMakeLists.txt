@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(seapath_data_fusion)
+project(seapath_ahrs)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 add_compile_options(-std=c++14)
@@ -33,7 +33,9 @@ include_directories(
 ## Declare a C++ executable
 add_executable(
     ${PROJECT_NAME}_node
-    src/main.cpp)
+    src/main.cpp
+    src/ahrs.cpp
+)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(${PROJECT_NAME}_node
