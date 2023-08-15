@@ -1,5 +1,5 @@
 #include "seapath_gnss_ros_driver/seapath_ros_driver.hpp"
-
+#include <geometry_msgs/Point.h>
 geometry_msgs::PoseWithCovarianceStamped SeaPathRosDriver::toPoseWithCovarianceStamped(const KMBinaryData& data) {
     geometry_msgs::PoseWithCovarianceStamped pose_msg;
 
@@ -15,6 +15,7 @@ geometry_msgs::PoseWithCovarianceStamped SeaPathRosDriver::toPoseWithCovarianceS
         ORIGIN_N = north;
         ORIGIN_E = east;
         ORIGIN_H = height;
+        origin_pub.publish(geometry_msgs::Point{ORIGIN_N, ORIGIN_E, ORIGIN_H});
     }
 
     auto xy = displacement_wgs84(north, east);
@@ -72,6 +73,7 @@ geometry_msgs::TwistWithCovarianceStamped SeaPathRosDriver::toTwistWithCovarianc
 
 SeaPathRosDriver::SeaPathRosDriver(ros::NodeHandle nh, const char* UDP_IP, const int UDP_PORT) : nh{nh}, seaPathSocket(UDP_IP, UDP_PORT) {
     nav_pub = nh.advertise<sensor_msgs::NavSatFix>("/sensor/gnss", 10);
+    origin_pub = nh.advertise<geometry_msgs::Point>("/sensor/origin", 10);
     pose_pub = nh.advertise<geometry_msgs::PoseWithCovarianceStamped>("/sensor/seapath/pose/ned", 10);
     twist_pub = nh.advertise<geometry_msgs::TwistWithCovarianceStamped>("/sensor/seapath/twist/ned", 10);
 

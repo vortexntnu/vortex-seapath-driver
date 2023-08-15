@@ -69,6 +69,7 @@ private:
     geometry_msgs::TwistWithCovarianceStamped toTwistWithCovarianceStamped(const KMBinaryData& data);
 
     ros::Publisher nav_pub;
+    ros::Publisher origin_pub;
     ros::Publisher pose_pub;
     ros::Publisher twist_pub;
 
