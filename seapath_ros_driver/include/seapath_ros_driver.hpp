@@ -13,7 +13,7 @@
 #include "geometry_msgs/msg/PoseWithCovarianceStamped.hpp"
 #include "tf2/transform_datatypes.h" 
 
-#include "seapath_gnss_ros_driver/seapath_socket.hpp"
+#include "seapath_ros_driver/seapath_socket.hpp"
 
 
 
@@ -73,6 +73,7 @@ private:
     rclcpp::Publisher nav_pub;
     rclcpp::Publisher pose_pub;
     rclcpp::Publisher twist_pub;
+    rclcpp::Publisher origin_pub;
 
     std::pair<double, double> displacement_wgs84(double north, double east);
     double convert_dms_to_dd(double dms);

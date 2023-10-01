@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(seapath_gnss_ros_driver2)
+project(seapath_ros_driver)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)

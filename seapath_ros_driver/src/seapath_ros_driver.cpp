@@ -1,4 +1,4 @@
-#include "seapath_gnss_ros_driver/seapath_ros_driver.hpp"
+#include "seapath_ros_driver/seapath_ros_driver.hpp"
 
 geometry_msgs::msg::PoseWithCovarianceStamped SeaPathRosDriver::toPoseWithCovarianceStamped(const KMBinaryData& data) {
     geometry_msgs::msg::PoseWithCovarianceStamped pose_msg;
@@ -16,6 +16,7 @@ geometry_msgs::msg::PoseWithCovarianceStamped SeaPathRosDriver::toPoseWithCovari
         ORIGIN_N = north;
         ORIGIN_E = east;
         ORIGIN_H = height;
+        origin_pub.publish(geometry_msgs::Point{ORIGIN_N, ORIGIN_E, ORIGIN_H});
     }
 
     auto xy = displacement_wgs84(north, east);
@@ -76,7 +77,7 @@ SeaPathRosDriver::SeaPathRosDriver(rclcpp::Node nh, const char* UDP_IP, const in
    
     pose_pub = nh.advertise<geometry_msgs::msg::PoseWithCovarianceStamped>("/sensor/seapath/pose/ned", 10);
     twist_pub = nh.advertise<geometry_msgs::msg::TwistWithCovarianceStamped>("/sensor/seapath/twist/ned", 10);
-
+    origin_pub = nh.advertise<geometry_msgs::Point>("/sensor/origin", 10);
 }
 
 KMBinaryData SeaPathRosDriver::getKMBinaryData() {
@@ -132,6 +133,7 @@ void SeaPathRosDriver::publish(KMBinaryData data) {
 
     pose_pub.publish(pose);
     twist_pub.publish(twist);
+
 }
 
 std::pair<double, double> SeaPathRosDriver::displacement_wgs84(double north, double east) {
