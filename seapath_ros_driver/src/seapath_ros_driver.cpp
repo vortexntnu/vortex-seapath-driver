@@ -1,4 +1,4 @@
-#include "seapath_ros_driver/seapath_ros_driver.hpp"
+#include "seapath_ros_driver/include/seapath_ros_driver.hpp"
 
 geometry_msgs::msg::PoseWithCovarianceStamped SeaPathRosDriver::toPoseWithCovarianceStamped(const KMBinaryData& data) {
     geometry_msgs::msg::PoseWithCovarianceStamped pose_msg;
@@ -99,14 +99,14 @@ KMBinaryData SeaPathRosDriver::parseKMBinaryData(std::vector<uint8_t> data) {
     copyData(&result.dgm_length, 2);
     copyData(&result.dgm_version, 2);
     copyData(&result.utc_seconds, 4);
-    copyData(&result.utc_nanoseconds, 4);golfklubb
+    copyData(&result.utc_nanoseconds, 4);
     copyData(&result.pitch, 4);
     copyData(&result.heading, 4);
     copyData(&result.heave, 4);
     copyData(&result.roll_rate, 4);
     copyData(&result.pitch_rate, 4);
     copyData(&result.yaw_rate, 4);
-    copyData(&result.north_velocity, 4);golfklubb
+    copyData(&result.north_velocity, 4);
     copyData(&result.east_velocity, 4);
     copyData(&result.down_velocity, 4);
     copyData(&result.latitude_error, 4);

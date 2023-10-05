@@ -7,13 +7,12 @@
 #include <vector>
 
 #include "rclcpp/rclcpp.hpp" 
-#include "sensor_msgs/msg/NavSatFix.hpp"
-#include "nav_msgs/msg/Odometry.hpp"
-#include "geometry_msgs/msg/TwistWithCovarianceStamped.hpp"
-#include "geometry_msgs/msg/PoseWithCovarianceStamped.hpp"
+#include "sensor_msgs/msg/nav_sat_fix.hpp"
+#include "geometry_msgs/msg/twist_with_covariance_stamped.hpp"
+#include "geometry_msgs/msg/pose_with_covariance_stamped.hpp"
 #include "tf2/transform_datatypes.h" 
 
-#include "seapath_ros_driver/seapath_socket.hpp"
+#include "seapath_ros_driver/include/seapath_socket.hpp"
 
 
 
