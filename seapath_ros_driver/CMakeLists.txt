@@ -5,33 +5,6 @@ if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 17)
 endif()
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  add_compile_options(-Wall -Wextra -Wpedantic)
-endif()
-<<<<<<< HEAD
-#find_package(catkin REQUIRED COMPONENTS roscpp std_msgs)
-find_package(ament_cmake REQUIRED)
-find_package(rclcpp REQUIRED)
-find_package(std_msgs REQUIRED)
-#catkin_package()
-#include_directories(${catkin_INCLUDE_DIRS})
-include_directories(include)
-add_executable(seapath_ros_driver_node seapath_ros_driver_node.cpp)
-#target_link_libraries(talker ${catkin_LIBRARIES})
-ament_target_dependencies(${PROJECT_NAME}_node
-  rclcpp
-  std_msgs)
-#install(TARGETS talker
-#  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
-install(TARGETS
-  DESTINATION lib/${PROJECT_NAME}_node)
-install(DIRECTORY include/
-  DESTINATION include)
-ament_export_include_directories(include)
-ament_export_dependencies(std_msgs)
-ament_package()
-=======
-
-if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic -Wno-unused-local-typedefs -fopenmp)
 endif()
 # find dependencies
@@ -48,7 +21,7 @@ include_directories(include)
 
 add_executable(${PROJECT_NAME}_node
   src/seapath_ros_driver.cpp
-  src/seapath_ros_node.cpp
+  src/seapath_ros_driver_node.cpp
 )
 
 install(
@@ -78,4 +51,3 @@ endif()
 
 
 ament_package()
->>>>>>> 9aa9c9d0134e7acf326f9945c29d8d3647de1621

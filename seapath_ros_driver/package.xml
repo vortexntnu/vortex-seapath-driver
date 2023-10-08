@@ -18,11 +18,6 @@
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
   
-<<<<<<< HEAD
-=======
-  <exec_depend>ros2launch</exec_depend>
-
->>>>>>> 9aa9c9d0134e7acf326f9945c29d8d3647de1621
   <export>
     <build_type>ament_cmake</build_type>
   </export>
