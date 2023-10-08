@@ -1,8 +1,4 @@
 #include "seapath_ros_driver/include/seapath_ros_driver.hpp"
-<<<<<<< HEAD:seapath_ros_driver/src/seapath_ros_driver_node.cpp
-
-=======
->>>>>>> 9aa9c9d0134e7acf326f9945c29d8d3647de1621:seapath_ros_driver/src/seapath_ros_node.cpp
 
 void printKMBinaryData(const KMBinaryData& data) {
     std::cout << "Start ID: " << data.start_id << std::endl;
@@ -41,22 +37,23 @@ void printKMBinaryData(const KMBinaryData& data) {
 
 
 int main(int argc, char** argv) {
-    rclcpp::init();
-    rclcpp::Node nh;
 
+    rclcpp::init(argc, argv);
     std::string UDP_IP;
     int UDP_PORT;
 
-    nh.param("UDP_IP", UDP_IP, std::string("0.0.0.0"));
-    nh.param("UDP_PORT", UDP_PORT, 31421);
+    SeaPathRosDriver seaPathRosDriver(UDP_IP.c_str(), UDP_PORT);
+    std::shared_ptr<rclcpp::Node> seaPathRosDriver_node = std::make_shared<SeaPathRosDriver>(seaPathRosDriver);
 
-    SeaPathRosDriver seaPathRosDriver(nh, UDP_IP.c_str(), UDP_PORT);
+    seaPathRosDriver_node->get_parameter_or("UDP_IP", UDP_IP, std::string("0.0.0.0"));
+    seaPathRosDriver_node->get_parameter_or("UDP_PORT", UDP_PORT, 31421);
+
 
     while (rclcpp::ok()) {
         KMBinaryData data = seaPathRosDriver.getKMBinaryData();
         seaPathRosDriver.publish(data);
         //printKMBinaryData(data);
-        rclcpp::spin();
+        rclcpp::spin(seaPathRosDriver_node);
     }
     // Should give warning when not connected
     if (!rclcpp::ok()) {

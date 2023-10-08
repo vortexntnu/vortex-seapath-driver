@@ -3,7 +3,7 @@
 geometry_msgs::msg::PoseWithCovarianceStamped SeaPathRosDriver::toPoseWithCovarianceStamped(const KMBinaryData& data) {
     geometry_msgs::msg::PoseWithCovarianceStamped pose_msg;
     rclcpp::Time current_time;
-    pose_msg.header.stamp = current_time = nh.now();
+    pose_msg.header.stamp = current_time = this->now();
 
     pose_msg.header.frame_id = "gnss"; 
 
@@ -16,7 +16,9 @@ geometry_msgs::msg::PoseWithCovarianceStamped SeaPathRosDriver::toPoseWithCovari
         ORIGIN_N = north;
         ORIGIN_E = east;
         ORIGIN_H = height;
-        origin_pub->publish(ORIGIN_N, ORIGIN_E, ORIGIN_H);
+
+        //true if origin is reseted. updates origin publisher correctly
+        reseted_origin = 1;
     }
 
     auto xy = displacement_wgs84(north, east);
@@ -25,7 +27,9 @@ geometry_msgs::msg::PoseWithCovarianceStamped SeaPathRosDriver::toPoseWithCovari
     pose_msg.pose.pose.position.y = xy.second;
     pose_msg.pose.pose.position.z = height - ORIGIN_H;
 
-    tf::Quaternion q = tf::createQuaternionFromRPY(data.roll, data.pitch, data.heading);
+    tf2::Quaternion q;
+    q.setRPY(data.roll, data.pitch, data.heading);
+
     pose_msg.pose.pose.orientation.x = q.x();
     pose_msg.pose.pose.orientation.y = q.y();
     pose_msg.pose.pose.orientation.z = q.z();
@@ -44,7 +48,7 @@ geometry_msgs::msg::PoseWithCovarianceStamped SeaPathRosDriver::toPoseWithCovari
 geometry_msgs::msg::TwistWithCovarianceStamped SeaPathRosDriver::toTwistWithCovarianceStamped(const KMBinaryData& data) {
     geometry_msgs::msg::TwistWithCovarianceStamped twist_msg;
     rclcpp::Time current_time;
-    twist_msg.header.stamp = current_time = nh.now();
+    twist_msg.header.stamp = current_time = this->now();
 
     twist_msg.header.frame_id = "gnss";
 
@@ -73,11 +77,12 @@ geometry_msgs::msg::TwistWithCovarianceStamped SeaPathRosDriver::toTwistWithCova
     return twist_msg;
 }
 
-SeaPathRosDriver::SeaPathRosDriver(rclcpp::Node nh, const char* UDP_IP, const int UDP_PORT) : seaPathSocket(UDP_IP, UDP_PORT) {
-   
-    pose_pub = nh.create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>("/sensor/seapath/pose/ned", 10);
-    twist_pub = nh.create_publisher<geometry_msgs::msg::TwistWithCovarianceStamped>("/sensor/seapath/twist/ned", 10);
-    origin_pub = nh.create_publisher<geometry_msgs::msg::Point>("/sensor/origin", 10);
+SeaPathRosDriver::SeaPathRosDriver(const char* UDP_IP, const int UDP_PORT) : seaPathSocket(UDP_IP, UDP_PORT), Node("seapath_ros_driver_node")
+{
+    pose_pub = this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>("/sensor/seapath/pose/ned", 10);
+    twist_pub = this->create_publisher<geometry_msgs::msg::TwistWithCovarianceStamped>("/sensor/seapath/twist/ned", 10);
+    origin_pub = this->create_publisher<geometry_msgs::msg::Point>("/sensor/origin", 10);
+
 }
 
 KMBinaryData SeaPathRosDriver::getKMBinaryData() {
@@ -130,9 +135,20 @@ KMBinaryData SeaPathRosDriver::parseKMBinaryData(std::vector<uint8_t> data) {
 void SeaPathRosDriver::publish(KMBinaryData data) {
     auto pose = toPoseWithCovarianceStamped(data);
     auto twist = toTwistWithCovarianceStamped(data);
+    geometry_msgs::msg::Point origin;
+
+    //checks if origin is reseted 
+    if (reseted_origin != 0){
+        reseted_origin = 0;
+
+        origin.x = ORIGIN_N;
+        origin.y = ORIGIN_E;
+        origin.z = ORIGIN_H;
+    }
 
     pose_pub->publish(pose);
     twist_pub->publish(twist);
+    origin_pub->publish(origin);
 
 }
 
@@ -148,8 +164,8 @@ std::pair<double, double> SeaPathRosDriver::displacement_wgs84(double north, dou
 
 }
 
-void SeaPathRosDriver::resetOrigin(){
-    ORIGIN_E = data->longitude;
+void SeaPathRosDriver::resetOrigin(const KMBinaryData& data){
+    ORIGIN_E = data.longitude;
     ORIGIN_N = data.latitude;
 }
 

@@ -11,6 +11,7 @@
 #include "geometry_msgs/msg/twist_with_covariance_stamped.hpp"
 #include "geometry_msgs/msg/pose_with_covariance_stamped.hpp"
 #include "tf2/transform_datatypes.h" 
+#include "tf2/LinearMath/Quaternion.h"
 
 #include "seapath_ros_driver/include/seapath_socket.hpp"
 
@@ -54,21 +55,19 @@ struct KMBinaryData {
     float delayed_heave;
 };
 
-class SeaPathRosDriver {
+class SeaPathRosDriver : public rclcpp::Node{
 public:
-    SeaPathRosDriver(rclcpp::Node nh, const char* UDP_IP, const int UDP_PORT);
+    SeaPathRosDriver(const char* UDP_IP, const int UDP_PORT);
     ~SeaPathRosDriver() = default;
     KMBinaryData getKMBinaryData();
     void publish(KMBinaryData data);
+ 
 
 private:
-    rclcpp::Node nh;
-
     SeaPathSocket seaPathSocket;
     KMBinaryData parseKMBinaryData(std::vector<uint8_t> data);
     geometry_msgs::msg::PoseWithCovarianceStamped toPoseWithCovarianceStamped(const KMBinaryData& data);
     geometry_msgs::msg::TwistWithCovarianceStamped toTwistWithCovarianceStamped(const KMBinaryData& data);
-    rclcpp::Node nav_pub;
     rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr pose_pub;
     rclcpp::Publisher<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr twist_pub;
     rclcpp::Publisher<geometry_msgs::msg::Point>::SharedPtr origin_pub;
@@ -80,6 +79,8 @@ private:
     double ORIGIN_N = -100;
     double ORIGIN_E = -100;
     double ORIGIN_H = -100;
+
+    bool reseted_origin = 0;
 };
 
 #endif //SEAPATH_ROS_DRIVER_H
