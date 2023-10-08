@@ -13,7 +13,7 @@
 #include "tf2/transform_datatypes.h" 
 #include "tf2/LinearMath/Quaternion.h"
 
-#include "seapath_ros_driver/include/seapath_socket.hpp"
+#include "seapath_socket.hpp"
 
 
 

@@ -1,4 +1,4 @@
-#include "seapath_ros_driver/include/seapath_ros_driver.hpp"
+#include "seapath_ros_driver.hpp"
 
 geometry_msgs::msg::PoseWithCovarianceStamped SeaPathRosDriver::toPoseWithCovarianceStamped(const KMBinaryData& data) {
     geometry_msgs::msg::PoseWithCovarianceStamped pose_msg;

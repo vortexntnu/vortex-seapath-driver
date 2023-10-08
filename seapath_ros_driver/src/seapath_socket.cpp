@@ -1,4 +1,4 @@
-#include "seapath_ros_driver/include/seapath_socket.hpp"
+#include "seapath_socket.hpp"
 
 SeaPathSocket::SeaPathSocket(const char* UDP_IP, const int UDP_PORT) {
     if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
