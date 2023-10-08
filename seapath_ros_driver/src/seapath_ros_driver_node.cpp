@@ -1,5 +1,8 @@
 #include "seapath_ros_driver/include/seapath_ros_driver.hpp"
+<<<<<<< HEAD:seapath_ros_driver/src/seapath_ros_driver_node.cpp
 
+=======
+>>>>>>> 9aa9c9d0134e7acf326f9945c29d8d3647de1621:seapath_ros_driver/src/seapath_ros_node.cpp
 
 void printKMBinaryData(const KMBinaryData& data) {
     std::cout << "Start ID: " << data.start_id << std::endl;
