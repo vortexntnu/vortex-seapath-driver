@@ -1,4 +1,5 @@
-#include "seapath_ros_driver/seapath_ros_driver.hpp"
+#include "seapath_ros_driver/include/seapath_ros_driver.hpp"
+
 
 void printKMBinaryData(const KMBinaryData& data) {
     std::cout << "Start ID: " << data.start_id << std::endl;
@@ -37,7 +38,7 @@ void printKMBinaryData(const KMBinaryData& data) {
 
 
 int main(int argc, char** argv) {
-    rclcpp::init(argc, argv, "seapath_ros_driver_node");
+    rclcpp::init();
     rclcpp::Node nh;
 
     std::string UDP_IP;

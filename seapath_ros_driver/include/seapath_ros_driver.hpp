@@ -7,13 +7,12 @@
 #include <vector>
 
 #include "rclcpp/rclcpp.hpp" 
-#include "sensor_msgs/msg/NavSatFix.hpp"
-#include "nav_msgs/msg/Odometry.hpp"
-#include "geometry_msgs/msg/TwistWithCovarianceStamped.hpp"
-#include "geometry_msgs/msg/PoseWithCovarianceStamped.hpp"
+#include "sensor_msgs/msg/nav_sat_fix.hpp"
+#include "geometry_msgs/msg/twist_with_covariance_stamped.hpp"
+#include "geometry_msgs/msg/pose_with_covariance_stamped.hpp"
 #include "tf2/transform_datatypes.h" 
 
-#include "seapath_ros_driver/seapath_socket.hpp"
+#include "seapath_ros_driver/include/seapath_socket.hpp"
 
 
 
@@ -67,17 +66,16 @@ private:
 
     SeaPathSocket seaPathSocket;
     KMBinaryData parseKMBinaryData(std::vector<uint8_t> data);
-    geometry_msgs::PoseWithCovarianceStamped toPoseWithCovarianceStamped(const KMBinaryData& data);
-    geometry_msgs::TwistWithCovarianceStamped toTwistWithCovarianceStamped(const KMBinaryData& data);
-
-    rclcpp::Publisher nav_pub;
-    rclcpp::Publisher pose_pub;
-    rclcpp::Publisher twist_pub;
-    rclcpp::Publisher origin_pub;
+    geometry_msgs::msg::PoseWithCovarianceStamped toPoseWithCovarianceStamped(const KMBinaryData& data);
+    geometry_msgs::msg::TwistWithCovarianceStamped toTwistWithCovarianceStamped(const KMBinaryData& data);
+    rclcpp::Node nav_pub;
+    rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr pose_pub;
+    rclcpp::Publisher<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr twist_pub;
+    rclcpp::Publisher<geometry_msgs::msg::Point>::SharedPtr origin_pub;
 
     std::pair<double, double> displacement_wgs84(double north, double east);
     double convert_dms_to_dd(double dms);
-    void resetOrigin();
+    void resetOrigin(const KMBinaryData& data);
 
     double ORIGIN_N = -100;
     double ORIGIN_E = -100;

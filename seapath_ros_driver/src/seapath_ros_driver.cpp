@@ -1,9 +1,9 @@
-#include "seapath_ros_driver/seapath_ros_driver.hpp"
+#include "seapath_ros_driver/include/seapath_ros_driver.hpp"
 
 geometry_msgs::msg::PoseWithCovarianceStamped SeaPathRosDriver::toPoseWithCovarianceStamped(const KMBinaryData& data) {
     geometry_msgs::msg::PoseWithCovarianceStamped pose_msg;
-
-    pose_msg.header.stamp = rclcpp::Time current_time = nh->now();
+    rclcpp::Time current_time;
+    pose_msg.header.stamp = current_time = nh.now();
 
     pose_msg.header.frame_id = "gnss"; 
 
@@ -12,11 +12,11 @@ geometry_msgs::msg::PoseWithCovarianceStamped SeaPathRosDriver::toPoseWithCovari
     float height = data.ellipsoid_height;
 
     if(ORIGIN_N == -100 && ORIGIN_E == -100 && ORIGIN_H == -100) {
-        ROS_INFO_STREAM("Setting global origin to: " << north << ", " << east << "\n");
+        RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "Setting global origin to: " << north << ", " << east << "\n");
         ORIGIN_N = north;
         ORIGIN_E = east;
         ORIGIN_H = height;
-        origin_pub.publish(geometry_msgs::Point{ORIGIN_N, ORIGIN_E, ORIGIN_H});
+        origin_pub->publish(ORIGIN_N, ORIGIN_E, ORIGIN_H);
     }
 
     auto xy = displacement_wgs84(north, east);
@@ -43,8 +43,8 @@ geometry_msgs::msg::PoseWithCovarianceStamped SeaPathRosDriver::toPoseWithCovari
 
 geometry_msgs::msg::TwistWithCovarianceStamped SeaPathRosDriver::toTwistWithCovarianceStamped(const KMBinaryData& data) {
     geometry_msgs::msg::TwistWithCovarianceStamped twist_msg;
-
-    twist_msg.header.stamp = rclcpp::Time current_time = nh->now();
+    rclcpp::Time current_time;
+    twist_msg.header.stamp = current_time = nh.now();
 
     twist_msg.header.frame_id = "gnss";
 
@@ -73,11 +73,11 @@ geometry_msgs::msg::TwistWithCovarianceStamped SeaPathRosDriver::toTwistWithCova
     return twist_msg;
 }
 
-SeaPathRosDriver::SeaPathRosDriver(rclcpp::Node nh, const char* UDP_IP, const int UDP_PORT) : nh{nh}, seaPathSocket(UDP_IP, UDP_PORT) {
+SeaPathRosDriver::SeaPathRosDriver(rclcpp::Node nh, const char* UDP_IP, const int UDP_PORT) : seaPathSocket(UDP_IP, UDP_PORT) {
    
-    pose_pub = nh.advertise<geometry_msgs::msg::PoseWithCovarianceStamped>("/sensor/seapath/pose/ned", 10);
-    twist_pub = nh.advertise<geometry_msgs::msg::TwistWithCovarianceStamped>("/sensor/seapath/twist/ned", 10);
-    origin_pub = nh.advertise<geometry_msgs::Point>("/sensor/origin", 10);
+    pose_pub = nh.create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>("/sensor/seapath/pose/ned", 10);
+    twist_pub = nh.create_publisher<geometry_msgs::msg::TwistWithCovarianceStamped>("/sensor/seapath/twist/ned", 10);
+    origin_pub = nh.create_publisher<geometry_msgs::msg::Point>("/sensor/origin", 10);
 }
 
 KMBinaryData SeaPathRosDriver::getKMBinaryData() {
@@ -99,14 +99,14 @@ KMBinaryData SeaPathRosDriver::parseKMBinaryData(std::vector<uint8_t> data) {
     copyData(&result.dgm_length, 2);
     copyData(&result.dgm_version, 2);
     copyData(&result.utc_seconds, 4);
-    copyData(&result.utc_nanoseconds, 4);golfklubb
+    copyData(&result.utc_nanoseconds, 4);
     copyData(&result.pitch, 4);
     copyData(&result.heading, 4);
     copyData(&result.heave, 4);
     copyData(&result.roll_rate, 4);
     copyData(&result.pitch_rate, 4);
     copyData(&result.yaw_rate, 4);
-    copyData(&result.north_velocity, 4);golfklubb
+    copyData(&result.north_velocity, 4);
     copyData(&result.east_velocity, 4);
     copyData(&result.down_velocity, 4);
     copyData(&result.latitude_error, 4);
@@ -131,8 +131,8 @@ void SeaPathRosDriver::publish(KMBinaryData data) {
     auto pose = toPoseWithCovarianceStamped(data);
     auto twist = toTwistWithCovarianceStamped(data);
 
-    pose_pub.publish(pose);
-    twist_pub.publish(twist);
+    pose_pub->publish(pose);
+    twist_pub->publish(twist);
 
 }
 
@@ -149,7 +149,7 @@ std::pair<double, double> SeaPathRosDriver::displacement_wgs84(double north, dou
 }
 
 void SeaPathRosDriver::resetOrigin(){
-    ORIGIN_E = data.longitude;
+    ORIGIN_E = data->longitude;
     ORIGIN_N = data.latitude;
 }
 
