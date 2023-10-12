@@ -5,6 +5,8 @@
 #include <sstream>
 #include <cmath> 
 #include <vector>
+#include <chrono>
+#include <memory>
 
 #include "rclcpp/rclcpp.hpp" 
 #include "sensor_msgs/msg/nav_sat_fix.hpp"
@@ -15,10 +17,8 @@
 
 #include "seapath_socket.hpp"
 
-
-
-
-
+using std::placeholders::_1;
+using namespace std::chrono_literals;
 
 struct KMBinaryData {
     char start_id[4];
@@ -56,12 +56,12 @@ struct KMBinaryData {
 };
 
 class SeaPathRosDriver : public rclcpp::Node{
-public:
-    SeaPathRosDriver(const char* UDP_IP, const int UDP_PORT);
+public: 
+    SeaPathRosDriver(const char* UDP_IP, const int UDP_PORT, std::chrono::duration<double> timerPeriod);
     ~SeaPathRosDriver() = default;
     KMBinaryData getKMBinaryData();
     void publish(KMBinaryData data);
- 
+    
 
 private:
     SeaPathSocket seaPathSocket;
@@ -81,6 +81,11 @@ private:
     double ORIGIN_H = -100;
 
     bool reseted_origin = 0;
+    
+    void timer_callback();
+    rclcpp::TimerBase::SharedPtr _timer;
+    const std::chrono::duration<double> timerPeriod;
+
 };
 
-#endif //SEAPATH_ROS_DRIVER_H
+#endif //SEAPATH_ROS_DRIVER_HSocket

@@ -41,24 +41,16 @@ int main(int argc, char** argv) {
     rclcpp::init(argc, argv);
     std::string UDP_IP;
     int UDP_PORT;
-
-    auto seaPathRosDriverNode = std::make_shared<SeaPathRosDriver>(UDP_IP.c_str(), UDP_PORT);
+    
+    auto seaPathRosDriverNode = std::make_shared<SeaPathRosDriver>(UDP_IP.c_str(), UDP_PORT, 100ms);
 
     seaPathRosDriverNode->get_parameter_or("UDP_IP", UDP_IP, std::string("0.0.0.0"));
     seaPathRosDriverNode->get_parameter_or("UDP_PORT", UDP_PORT, 31421);
 
 
-    while (rclcpp::ok()) {
-        KMBinaryData data = seaPathRosDriverNode->getKMBinaryData();
-        seaPathRosDriverNode->publish(data);
-        //printKMBinaryData(data);
-        rclcpp::spin(seaPathRosDriverNode);
-    }
-    // Should give warning when not connected
-    if (!rclcpp::ok()) {
-    RCLCPP_WARN(rclcpp::get_logger("seapath_ros_driver_node"), "rclcpp is not OK. Exiting the loop.");
-    }
+    rclcpp::spin(seaPathRosDriverNode);
+    rclcpp::shutdown();
+
 
     return 0;
 }
-//få vekk while!!!!

@@ -1,15 +1,6 @@
 launch:
-<<<<<<< HEAD
   - node:
       pkg: seapath_ros_driver
-      exec: libexec/seapath_ros_node
+      exec: seapath_ros_driver_node
       name: seapath_ros_node
-      output: screen
-=======
-
-- node:
-    pkg: seapath_ros_driver
-    exec: seapath_ros_driver_node
-    name: seapath_ros_node
-    output: screen
->>>>>>> 9aa9c9d0134e7acf326f9945c29d8d3647de1621
+      #output: screen

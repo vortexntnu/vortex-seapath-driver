@@ -24,6 +24,7 @@ include_directories(include)
 add_executable(${PROJECT_NAME}_node
   src/seapath_ros_driver.cpp
   src/seapath_ros_driver_node.cpp
+  src/seapath_socket.cpp
 )
 ament_target_dependencies(${PROJECT_NAME}_node 
   rclcpp 
@@ -44,7 +45,8 @@ install(DIRECTORY
 
 install(TARGETS
   ${PROJECT_NAME}_node
-  DESTINATION lib/${PROJECt_NAME})
+  DESTINATION lib/${PROJECT_NAME}/
+  )
 
 
 
@@ -59,6 +61,8 @@ if(BUILD_TESTING)
   # a copyright and license is added to all source files
   set(ament_cmake_cpplint_FOUND TRUE)
   ament_lint_auto_find_test_dependencies()
+
+
 endif()
 
 

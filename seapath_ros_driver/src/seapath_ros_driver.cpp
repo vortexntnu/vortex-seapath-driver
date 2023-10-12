@@ -77,11 +77,13 @@ geometry_msgs::msg::TwistWithCovarianceStamped SeaPathRosDriver::toTwistWithCova
     return twist_msg;
 }
 
-SeaPathRosDriver::SeaPathRosDriver(const char* UDP_IP, const int UDP_PORT) : seaPathSocket(UDP_IP, UDP_PORT), Node("seapath_ros_driver_node")
+SeaPathRosDriver::SeaPathRosDriver(const char* UDP_IP, const int UDP_PORT, std::chrono::duration<double> timerPeriod) : Node("seapath_ros_driver_node"), seaPathSocket(UDP_IP, UDP_PORT), timerPeriod{timerPeriod}
 {
     pose_pub = this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>("/sensor/seapath/pose/ned", 10);
     twist_pub = this->create_publisher<geometry_msgs::msg::TwistWithCovarianceStamped>("/sensor/seapath/twist/ned", 10);
     origin_pub = this->create_publisher<geometry_msgs::msg::Point>("/sensor/origin", 10);
+
+    _timer = this->create_wall_timer(timerPeriod, std::bind(&SeaPathRosDriver::timer_callback, this));
 
 }
 
@@ -150,6 +152,8 @@ void SeaPathRosDriver::publish(KMBinaryData data) {
     twist_pub->publish(twist);
     origin_pub->publish(origin);
 
+    RCLCPP_INFO(get_logger(), "pose: %f, twist: %f, origin: %f", pose, twist, origin);
+
 }
 
 std::pair<double, double> SeaPathRosDriver::displacement_wgs84(double north, double east) {
@@ -165,8 +169,18 @@ std::pair<double, double> SeaPathRosDriver::displacement_wgs84(double north, dou
 }
 
 void SeaPathRosDriver::resetOrigin(const KMBinaryData& data){
-    ORIGIN_E = data.longitude;
-    ORIGIN_N = data.latitude;
+    
+    float north = data.latitude;
+    float east = data.longitude;
+    float height = data.ellipsoid_height;
+
+    RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "Setting global origin to: " << north << ", " << east << "\n");
+    ORIGIN_N = north;
+    ORIGIN_E = east;
+    ORIGIN_H = height;
+
+    //true if origin is reseted. updates origin publisher correctly
+    reseted_origin = 1;
 }
 
 double SeaPathRosDriver::convert_dms_to_dd(double dms) {
@@ -175,3 +189,10 @@ double SeaPathRosDriver::convert_dms_to_dd(double dms) {
     double dd = degrees + (minutes / 60);
     return round(dd * 1e6) / 1e6;
 }
+
+void SeaPathRosDriver::timer_callback(){
+
+    // Publish
+    KMBinaryData data = getKMBinaryData();
+    publish(data);
+    }
