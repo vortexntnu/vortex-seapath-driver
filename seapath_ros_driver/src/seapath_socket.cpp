@@ -4,6 +4,7 @@ SeaPathSocket::SeaPathSocket(const char* UDP_IP, const int UDP_PORT) {
     if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
         perror("socket creation failed");
         exit(EXIT_FAILURE);
+        socketConnected = false;
     }
 
     memset(&servaddr, 0, sizeof(servaddr));
@@ -16,7 +17,10 @@ SeaPathSocket::SeaPathSocket(const char* UDP_IP, const int UDP_PORT) {
     if (bind(sockfd, (const struct sockaddr *)&servaddr, sizeof(servaddr)) < 0) {
         perror("bind failed");
         exit(EXIT_FAILURE);
+        socketConnected = false;
     }
+    //if the socket was created successfully
+    socketConnected = true;
 }
 
 SeaPathSocket::~SeaPathSocket() {

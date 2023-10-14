@@ -14,6 +14,7 @@
 #include "geometry_msgs/msg/pose_with_covariance_stamped.hpp"
 #include "tf2/transform_datatypes.h" 
 #include "tf2/LinearMath/Quaternion.h"
+#include "diagnostic_msgs/msg/diagnostic_status.hpp"
 
 #include "seapath_socket.hpp"
 
@@ -66,11 +67,14 @@ public:
 private:
     SeaPathSocket seaPathSocket;
     KMBinaryData parseKMBinaryData(std::vector<uint8_t> data);
+
     geometry_msgs::msg::PoseWithCovarianceStamped toPoseWithCovarianceStamped(const KMBinaryData& data);
     geometry_msgs::msg::TwistWithCovarianceStamped toTwistWithCovarianceStamped(const KMBinaryData& data);
+
     rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr pose_pub;
     rclcpp::Publisher<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr twist_pub;
     rclcpp::Publisher<geometry_msgs::msg::Point>::SharedPtr origin_pub;
+    rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticStatus>::SharedPtr diagnosticStatus_pub;
 
     std::pair<double, double> displacement_wgs84(double north, double east);
     double convert_dms_to_dd(double dms);

@@ -15,6 +15,7 @@ public:
     SeaPathSocket(const char* UDP_IP, const int UDP_PORT);
     ~SeaPathSocket();
     std::vector<uint8_t> receiveData();
+    bool socketConnected;
 
 private:
     int sockfd;

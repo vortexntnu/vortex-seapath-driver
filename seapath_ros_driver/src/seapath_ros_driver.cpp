@@ -82,10 +82,11 @@ SeaPathRosDriver::SeaPathRosDriver(const char* UDP_IP, const int UDP_PORT, std::
     pose_pub = this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>("/sensor/seapath/pose/ned", 10);
     twist_pub = this->create_publisher<geometry_msgs::msg::TwistWithCovarianceStamped>("/sensor/seapath/twist/ned", 10);
     origin_pub = this->create_publisher<geometry_msgs::msg::Point>("/sensor/origin", 10);
+    diagnosticStatus_pub = this->create_publisher<diagnostic_msgs::msg::DiagnosticStatus>("/diagnostic_msg", 10);
 
     _timer = this->create_wall_timer(timerPeriod, std::bind(&SeaPathRosDriver::timer_callback, this));
 
-}
+}                
 
 KMBinaryData SeaPathRosDriver::getKMBinaryData() {
     std::vector<uint8_t> data = seaPathSocket.receiveData();
@@ -138,6 +139,7 @@ void SeaPathRosDriver::publish(KMBinaryData data) {
     auto pose = toPoseWithCovarianceStamped(data);
     auto twist = toTwistWithCovarianceStamped(data);
     geometry_msgs::msg::Point origin;
+    diagnostic_msgs::msg::DiagnosticStatus current_diagnostic;
 
     //checks if origin is reseted 
     if (reseted_origin != 0){
@@ -148,11 +150,25 @@ void SeaPathRosDriver::publish(KMBinaryData data) {
         origin.z = ORIGIN_H;
     }
 
+    //check if it's properly connected to the socket
+    if(seaPathSocket.socketConnected == false){
+        current_diagnostic.level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
+        current_diagnostic.name = "Diagnostic_connection_to_socket_status";
+        current_diagnostic.message = "Socket disconnected";
+    }
+    else if (seaPathSocket.socketConnected == true){
+        current_diagnostic.level = diagnostic_msgs::msg::DiagnosticStatus::OK;
+        current_diagnostic.name = "Diagnostic_connection_to_socket_status";
+        current_diagnostic.message = "Socket connection is OK";
+    }
+
+
     pose_pub->publish(pose);
     twist_pub->publish(twist);
     origin_pub->publish(origin);
+    diagnosticStatus_pub->publish(current_diagnostic);
 
-    RCLCPP_INFO(get_logger(), "pose: %f, twist: %f, origin: %f", pose, twist, origin);
+    //RCLCPP_INFO(get_logger(), "pose: %f, twist: %f, origin: %f", pose, twist, origin);
 
 }
 

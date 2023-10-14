@@ -12,12 +12,14 @@ find_package(ament_cmake REQUIRED)
 # uncomment the following section in order to fill in
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
-find_package(ament_cmake    REQUIRED)
-find_package(rclcpp         REQUIRED)
-find_package(std_msgs       REQUIRED)
-find_package(geometry_msgs  REQUIRED)
-find_package(sensor_msgs    REQUIRED)
-find_package(tf2            REQUIRED)
+find_package(ament_cmake      REQUIRED)
+find_package(rclcpp           REQUIRED)
+find_package(std_msgs         REQUIRED)
+find_package(geometry_msgs    REQUIRED)
+find_package(sensor_msgs      REQUIRED)
+find_package(tf2              REQUIRED)
+find_package(diagnostic_msgs  REQUIRED)
+
 
 include_directories(include)
 
@@ -32,6 +34,7 @@ ament_target_dependencies(${PROJECT_NAME}_node
   geometry_msgs
   sensor_msgs
   tf2
+  diagnostic_msgs
 )
 
 install(
