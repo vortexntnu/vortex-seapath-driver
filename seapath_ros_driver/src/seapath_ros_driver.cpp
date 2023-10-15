@@ -5,7 +5,7 @@ geometry_msgs::msg::PoseWithCovarianceStamped SeaPathRosDriver::toPoseWithCovari
     rclcpp::Time current_time;
     pose_msg.header.stamp = current_time = this->now();
 
-    pose_msg.header.frame_id = "gnss"; 
+    pose_msg.header.frame_id = "seapath/frame/pose"; 
 
     float north = data.latitude;
     float east = data.longitude;
@@ -16,9 +16,6 @@ geometry_msgs::msg::PoseWithCovarianceStamped SeaPathRosDriver::toPoseWithCovari
         ORIGIN_N = north;
         ORIGIN_E = east;
         ORIGIN_H = height;
-
-        //true if origin is reseted. updates origin publisher correctly
-        reseted_origin = true;
     }
 
     auto xy = displacement_wgs84(north, east);
@@ -50,7 +47,7 @@ geometry_msgs::msg::TwistWithCovarianceStamped SeaPathRosDriver::toTwistWithCova
     rclcpp::Time current_time;
     twist_msg.header.stamp = current_time = this->now();
 
-    twist_msg.header.frame_id = "gnss";
+    twist_msg.header.frame_id = "seapath/frame/twist";
 
     twist_msg.twist.twist.linear.x = data.north_velocity;
     twist_msg.twist.twist.linear.y = data.east_velocity;
@@ -77,12 +74,58 @@ geometry_msgs::msg::TwistWithCovarianceStamped SeaPathRosDriver::toTwistWithCova
     return twist_msg;
 }
 
+
+geometry_msgs::msg::Point SeaPathRosDriver::getOriginPublisher(){
+    
+    geometry_msgs::msg::Point origin_msg;
+    origin_msg.set__x(ORIGIN_N);
+    origin_msg.set__y(ORIGIN_E);
+    origin_msg.set__z(ORIGIN_H);
+
+    //RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "New Origin: " << "N:" << origin_msg.x << ", E:" << origin_msg.y << "H: " << origin_msg.z <<"\n");
+    return origin_msg;
+}
+
+
+diagnostic_msgs::msg::DiagnosticStatus SeaPathRosDriver::getDiagnosticPublisher(){
+    //check if it's properly connected to the socket
+    diagnostic_msgs::msg::DiagnosticStatus diagnostic_msg;
+    if(seaPathSocket.socketConnected == false){
+        diagnostic_msg.level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
+        diagnostic_msg.name = "Diagnostic_connection_to_socket_status";
+        diagnostic_msg.message = "Socket disconnected";
+    }
+    else if (seaPathSocket.socketConnected == true){
+        diagnostic_msg.level = diagnostic_msgs::msg::DiagnosticStatus::OK;
+        diagnostic_msg.name = "Diagnostic_connection_to_socket_status";
+        diagnostic_msg.message = "Socket connection is OK";
+    }
+    return diagnostic_msg;
+}
+
+
+sensor_msgs::msg::NavSatFix SeaPathRosDriver::getNavSatFixPublisher(const KMBinaryData& data){
+    sensor_msgs::msg::NavSatFix nav_msg;
+    rclcpp::Time current_time;
+
+    nav_msg.header.stamp = current_time = this->now();
+    nav_msg.header.frame_id = "seapath/frame/NavSatFix";
+    
+    nav_msg.latitude = data.latitude;
+    nav_msg.longitude = data.longitude;
+    nav_msg.altitude = data.ellipsoid_height;
+
+    return nav_msg;
+}
+
+
 SeaPathRosDriver::SeaPathRosDriver(const char* UDP_IP, const int UDP_PORT, std::chrono::duration<double> timerPeriod) : Node("seapath_ros_driver_node"), seaPathSocket(UDP_IP, UDP_PORT), timerPeriod{timerPeriod}
 {
     pose_pub = this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>("/sensor/seapath/pose/ned", 10);
     twist_pub = this->create_publisher<geometry_msgs::msg::TwistWithCovarianceStamped>("/sensor/seapath/twist/ned", 10);
-    origin_pub = this->create_publisher<geometry_msgs::msg::Point>("/sensor/origin", 10);
+    origin_pub = this->create_publisher<geometry_msgs::msg::Point>("/sensor/seapath/origin", 10);
     diagnosticStatus_pub = this->create_publisher<diagnostic_msgs::msg::DiagnosticStatus>("/diagnostic_msg", 10);
+    nav_pub =  this->create_publisher<sensor_msgs::msg::NavSatFix>("/sensor/seapath/NavSatFix", 10);
 
     _timer = this->create_wall_timer(timerPeriod, std::bind(&SeaPathRosDriver::timer_callback, this));
 
@@ -136,39 +179,18 @@ KMBinaryData SeaPathRosDriver::parseKMBinaryData(std::vector<uint8_t> data) {
 
 
 void SeaPathRosDriver::publish(KMBinaryData data) {
-    auto pose = toPoseWithCovarianceStamped(data);
-    auto twist = toTwistWithCovarianceStamped(data);
-    diagnostic_msgs::msg::DiagnosticStatus current_diagnostic;
 
-    
-    //checks if origin is reseted, and publish the new origin
-    if (reseted_origin == true){
-        reseted_origin = false;
+    //auto pose = toPoseWithCovarianceStamped(data);
+    //auto twist = toTwistWithCovarianceStamped(data);
+    //auto origin = getOriginPublisher();
+    auto current_diagnostic = getDiagnosticPublisher();
+    //auto navSatFix = getNavSatFixPublisher(data);
 
-        origin.set__x(ORIGIN_N);
-        origin.set__y(ORIGIN_E);
-        origin.set__z(ORIGIN_H);
-
-        RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "New Origin: " << "N:" << origin.x << ", E:" << origin.y << "H: " << origin.z <<"\n");
-        //RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "Origin reseted: " << origin.x << " = " << ORIGIN_N << "\n");
-    }
-
-    //check if it's properly connected to the socket
-    if(seaPathSocket.socketConnected == false){
-        current_diagnostic.level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
-        current_diagnostic.name = "Diagnostic_connection_to_socket_status";
-        current_diagnostic.message = "Socket disconnected";
-    }
-    else if (seaPathSocket.socketConnected == true){
-        current_diagnostic.level = diagnostic_msgs::msg::DiagnosticStatus::OK;
-        current_diagnostic.name = "Diagnostic_connection_to_socket_status";
-        current_diagnostic.message = "Socket connection is OK";
-    }
-
-    origin_pub->publish(origin);
-    pose_pub->publish(pose);
-    twist_pub->publish(twist);
+    //origin_pub->publish(origin);
+    //pose_pub->publish(pose);
+    //twist_pub->publish(twist);
     diagnosticStatus_pub->publish(current_diagnostic);
+    //nav_pub->publish(navSatFix);
 
     //RCLCPP_INFO(get_logger(), "pose: %f, twist: %f, origin: %f", pose, twist, origin);
     //RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "diagnostic: %f", current_diagnostic);
@@ -197,8 +219,6 @@ void SeaPathRosDriver::resetOrigin(const KMBinaryData& data){
     ORIGIN_E = east;
     ORIGIN_H = height;
 
-    //true if origin is reseted. updates origin publisher correctly
-    reseted_origin = 1;
 }
 
 double SeaPathRosDriver::convert_dms_to_dd(double dms) {
@@ -211,7 +231,7 @@ double SeaPathRosDriver::convert_dms_to_dd(double dms) {
 void SeaPathRosDriver::timer_callback(){
 
     // Publish
-    //KMBinaryData data = getKMBinaryData();
-    KMBinaryData data;
+    KMBinaryData data = getKMBinaryData();
+    //KMBinaryData data;
     publish(data);
     }

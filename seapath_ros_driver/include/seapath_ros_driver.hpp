@@ -70,13 +70,16 @@ private:
 
     geometry_msgs::msg::PoseWithCovarianceStamped toPoseWithCovarianceStamped(const KMBinaryData& data);
     geometry_msgs::msg::TwistWithCovarianceStamped toTwistWithCovarianceStamped(const KMBinaryData& data);
+    geometry_msgs::msg::Point getOriginPublisher();
+    diagnostic_msgs::msg::DiagnosticStatus getDiagnosticPublisher();
+    sensor_msgs::msg::NavSatFix getNavSatFixPublisher(const KMBinaryData& data); 
 
     rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr pose_pub;
     rclcpp::Publisher<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr twist_pub;
     rclcpp::Publisher<geometry_msgs::msg::Point>::SharedPtr origin_pub;
     rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticStatus>::SharedPtr diagnosticStatus_pub;
+    rclcpp::Publisher<sensor_msgs::msg::NavSatFix>::SharedPtr nav_pub;
 
-    geometry_msgs::msg::Point origin;
 
     std::pair<double, double> displacement_wgs84(double north, double east);
     double convert_dms_to_dd(double dms);
@@ -85,8 +88,6 @@ private:
     double ORIGIN_N = -100;
     double ORIGIN_E = -100;
     double ORIGIN_H = -100;
-
-    bool reseted_origin = false;
     
     void timer_callback();
     rclcpp::TimerBase::SharedPtr _timer;
