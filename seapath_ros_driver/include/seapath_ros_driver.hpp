@@ -22,38 +22,38 @@ using std::placeholders::_1;
 using namespace std::chrono_literals;
 
 struct KMBinaryData {
-    char start_id[4];
-    uint16_t dgm_length;
-    uint16_t dgm_version;
-    uint32_t utc_seconds;
-    uint32_t utc_nanoseconds;
-    uint32_t status;
-    double latitude;
-    double longitude;
-    float ellipsoid_height;
-    float roll;
-    float pitch;
-    float heading;
-    float heave;
-    float roll_rate;
-    float pitch_rate;
-    float yaw_rate;
-    float north_velocity;
-    float east_velocity;
-    float down_velocity;
-    float latitude_error;
-    float longitude_error;
-    float height_error;
-    float roll_error;
-    float pitch_error;
-    float heading_error;
-    float heave_error;
-    float north_acceleration;
-    float east_acceleration;
-    float down_acceleration;
-    uint32_t delayed_heave_utc_seconds;
-    uint32_t delayed_heave_utc_nanoseconds;
-    float delayed_heave;
+    char start_id[4] = "a";
+    uint16_t dgm_length = 1;
+    uint16_t dgm_version = 2;
+    uint32_t utc_seconds = 3;
+    uint32_t utc_nanoseconds = 4;
+    uint32_t status = 5;
+    double latitude = 6.0;
+    double longitude = 7.0;
+    float ellipsoid_height = 8;
+    float roll = 9;
+    float pitch= 10;
+    float heading = 11;
+    float heave = 12;
+    float roll_rate = 13;
+    float pitch_rate =14;
+    float yaw_rate = 15;
+    float north_velocity= 16;
+    float east_velocity= 17;
+    float down_velocity= 18;
+    float latitude_error= 19;
+    float longitude_error= 20;
+    float height_error = 21;
+    float roll_error = 22;
+    float pitch_error = 23;
+    float heading_error = 24;
+    float heave_error = 25;
+    float north_acceleration = 26;
+    float east_acceleration = 27;
+    float down_acceleration = 28;
+    uint32_t delayed_heave_utc_seconds = 29;
+    uint32_t delayed_heave_utc_nanoseconds = 30;
+    float delayed_heave = 30;
 };
 
 class SeaPathRosDriver : public rclcpp::Node{
@@ -76,6 +76,8 @@ private:
     rclcpp::Publisher<geometry_msgs::msg::Point>::SharedPtr origin_pub;
     rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticStatus>::SharedPtr diagnosticStatus_pub;
 
+    geometry_msgs::msg::Point origin;
+
     std::pair<double, double> displacement_wgs84(double north, double east);
     double convert_dms_to_dd(double dms);
     void resetOrigin(const KMBinaryData& data);
@@ -84,7 +86,7 @@ private:
     double ORIGIN_E = -100;
     double ORIGIN_H = -100;
 
-    bool reseted_origin = 0;
+    bool reseted_origin = false;
     
     void timer_callback();
     rclcpp::TimerBase::SharedPtr _timer;

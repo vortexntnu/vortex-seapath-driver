@@ -12,13 +12,13 @@ geometry_msgs::msg::PoseWithCovarianceStamped SeaPathRosDriver::toPoseWithCovari
     float height = data.ellipsoid_height;
 
     if(ORIGIN_N == -100 && ORIGIN_E == -100 && ORIGIN_H == -100) {
-        RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "Setting global origin to: " << north << ", " << east << "\n");
+        RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "Setting global starting origin to: " << north << ", " << east << "\n");
         ORIGIN_N = north;
         ORIGIN_E = east;
         ORIGIN_H = height;
 
         //true if origin is reseted. updates origin publisher correctly
-        reseted_origin = 1;
+        reseted_origin = true;
     }
 
     auto xy = displacement_wgs84(north, east);
@@ -138,16 +138,19 @@ KMBinaryData SeaPathRosDriver::parseKMBinaryData(std::vector<uint8_t> data) {
 void SeaPathRosDriver::publish(KMBinaryData data) {
     auto pose = toPoseWithCovarianceStamped(data);
     auto twist = toTwistWithCovarianceStamped(data);
-    geometry_msgs::msg::Point origin;
     diagnostic_msgs::msg::DiagnosticStatus current_diagnostic;
 
-    //checks if origin is reseted 
-    if (reseted_origin != 0){
-        reseted_origin = 0;
+    
+    //checks if origin is reseted, and publish the new origin
+    if (reseted_origin == true){
+        reseted_origin = false;
 
-        origin.x = ORIGIN_N;
-        origin.y = ORIGIN_E;
-        origin.z = ORIGIN_H;
+        origin.set__x(ORIGIN_N);
+        origin.set__y(ORIGIN_E);
+        origin.set__z(ORIGIN_H);
+
+        RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "New Origin: " << "N:" << origin.x << ", E:" << origin.y << "H: " << origin.z <<"\n");
+        //RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "Origin reseted: " << origin.x << " = " << ORIGIN_N << "\n");
     }
 
     //check if it's properly connected to the socket
@@ -162,14 +165,13 @@ void SeaPathRosDriver::publish(KMBinaryData data) {
         current_diagnostic.message = "Socket connection is OK";
     }
 
-
+    origin_pub->publish(origin);
     pose_pub->publish(pose);
     twist_pub->publish(twist);
-    origin_pub->publish(origin);
     diagnosticStatus_pub->publish(current_diagnostic);
 
     //RCLCPP_INFO(get_logger(), "pose: %f, twist: %f, origin: %f", pose, twist, origin);
-
+    //RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "diagnostic: %f", current_diagnostic);
 }
 
 std::pair<double, double> SeaPathRosDriver::displacement_wgs84(double north, double east) {
@@ -209,6 +211,7 @@ double SeaPathRosDriver::convert_dms_to_dd(double dms) {
 void SeaPathRosDriver::timer_callback(){
 
     // Publish
-    KMBinaryData data = getKMBinaryData();
+    //KMBinaryData data = getKMBinaryData();
+    KMBinaryData data;
     publish(data);
     }
