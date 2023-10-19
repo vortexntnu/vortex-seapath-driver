@@ -124,7 +124,7 @@ SeaPathRosDriver::SeaPathRosDriver(const char* UDP_IP, const int UDP_PORT, std::
     pose_pub = this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>("/sensor/seapath/pose/ned", 10);
     twist_pub = this->create_publisher<geometry_msgs::msg::TwistWithCovarianceStamped>("/sensor/seapath/twist/ned", 10);
     origin_pub = this->create_publisher<geometry_msgs::msg::Point>("/sensor/seapath/origin", 10);
-    diagnosticStatus_pub = this->create_publisher<diagnostic_msgs::msg::DiagnosticStatus>("/diagnostic_msg", 10);
+    diagnosticStatus_pub = this->create_publisher<diagnostic_msgs::msg::DiagnosticStatus>("/sensor/seapath/diagnostic_msg", 10);
     nav_pub =  this->create_publisher<sensor_msgs::msg::NavSatFix>("/sensor/seapath/NavSatFix", 10);
 
     _timer = this->create_wall_timer(timerPeriod, std::bind(&SeaPathRosDriver::timer_callback, this));
@@ -133,6 +133,11 @@ SeaPathRosDriver::SeaPathRosDriver(const char* UDP_IP, const int UDP_PORT, std::
 
 KMBinaryData SeaPathRosDriver::getKMBinaryData() {
     std::vector<uint8_t> data = seaPathSocket.receiveData();
+
+    if (data.empty()){
+        RCLCPP_WARN_STREAM(rclcpp::get_logger("rclcpp"), "WARNING: Receive data timed out");
+    }
+
     return parseKMBinaryData(data);
 }
 
@@ -145,34 +150,35 @@ KMBinaryData SeaPathRosDriver::parseKMBinaryData(std::vector<uint8_t> data) {
         std::memcpy(dest, data.data() + offset, size);
         offset += size;
     };
-
-    copyData(result.start_id, 4);
-    copyData(&result.dgm_length, 2);
-    copyData(&result.dgm_version, 2);
-    copyData(&result.utc_seconds, 4);
-    copyData(&result.utc_nanoseconds, 4);
-    copyData(&result.pitch, 4);
-    copyData(&result.heading, 4);
-    copyData(&result.heave, 4);
-    copyData(&result.roll_rate, 4);
-    copyData(&result.pitch_rate, 4);
-    copyData(&result.yaw_rate, 4);
-    copyData(&result.north_velocity, 4);
-    copyData(&result.east_velocity, 4);
-    copyData(&result.down_velocity, 4);
-    copyData(&result.latitude_error, 4);
-    copyData(&result.longitude_error, 4);
-    copyData(&result.height_error, 4);
-    copyData(&result.roll_error, 4);
-    copyData(&result.pitch_error, 4);
-    copyData(&result.heading_error, 4);
-    copyData(&result.heave_error, 4);
-    copyData(&result.north_acceleration, 4);
-    copyData(&result.east_acceleration, 4);
-    copyData(&result.down_acceleration, 4);
-    copyData(&result.delayed_heave_utc_seconds, 4);
-    copyData(&result.delayed_heave_utc_nanoseconds, 4);
-    copyData(&result.delayed_heave, 4);
+    if(seaPathSocket.socketConnected){
+        copyData(result.start_id, 4);
+        copyData(&result.dgm_length, 2);
+        copyData(&result.dgm_version, 2);
+        copyData(&result.utc_seconds, 4);
+        copyData(&result.utc_nanoseconds, 4);
+        copyData(&result.pitch, 4);
+        copyData(&result.heading, 4);
+        copyData(&result.heave, 4);
+        copyData(&result.roll_rate, 4);
+        copyData(&result.pitch_rate, 4);
+        copyData(&result.yaw_rate, 4);
+        copyData(&result.north_velocity, 4);
+        copyData(&result.east_velocity, 4);
+        copyData(&result.down_velocity, 4);
+        copyData(&result.latitude_error, 4);
+        copyData(&result.longitude_error, 4);
+        copyData(&result.height_error, 4);
+        copyData(&result.roll_error, 4);
+        copyData(&result.pitch_error, 4);
+        copyData(&result.heading_error, 4);
+        copyData(&result.heave_error, 4);
+        copyData(&result.north_acceleration, 4);
+        copyData(&result.east_acceleration, 4);
+        copyData(&result.down_acceleration, 4);
+        copyData(&result.delayed_heave_utc_seconds, 4);
+        copyData(&result.delayed_heave_utc_nanoseconds, 4);
+        copyData(&result.delayed_heave, 4);
+    }
 
     return result;
 }
@@ -180,20 +186,21 @@ KMBinaryData SeaPathRosDriver::parseKMBinaryData(std::vector<uint8_t> data) {
 
 void SeaPathRosDriver::publish(KMBinaryData data) {
 
-    //auto pose = toPoseWithCovarianceStamped(data);
-    //auto twist = toTwistWithCovarianceStamped(data);
-    //auto origin = getOriginPublisher();
+    auto pose = toPoseWithCovarianceStamped(data);
+    auto twist = toTwistWithCovarianceStamped(data);
+    auto origin = getOriginPublisher();
     auto current_diagnostic = getDiagnosticPublisher();
-    //auto navSatFix = getNavSatFixPublisher(data);
+    auto navSatFix = getNavSatFixPublisher(data);
 
-    //origin_pub->publish(origin);
-    //pose_pub->publish(pose);
-    //twist_pub->publish(twist);
     diagnosticStatus_pub->publish(current_diagnostic);
-    //nav_pub->publish(navSatFix);
 
-    //RCLCPP_INFO(get_logger(), "pose: %f, twist: %f, origin: %f", pose, twist, origin);
-    //RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "diagnostic: %f", current_diagnostic);
+    if(current_diagnostic.level == diagnostic_msgs::msg::DiagnosticStatus::OK)
+    {
+        origin_pub->publish(origin);
+        pose_pub->publish(pose);
+        twist_pub->publish(twist);
+        nav_pub->publish(navSatFix);
+    }
 }
 
 std::pair<double, double> SeaPathRosDriver::displacement_wgs84(double north, double east) {
@@ -232,6 +239,5 @@ void SeaPathRosDriver::timer_callback(){
 
     // Publish
     KMBinaryData data = getKMBinaryData();
-    //KMBinaryData data;
     publish(data);
     }

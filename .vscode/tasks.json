@@ -1,0 +1,25 @@
+{
+    "tasks": [
+        {
+            "type": "colcon",
+            "args": [
+                "build",
+                "--symlink-install",
+                "--parallel-workers",
+                "$(nproc)",
+                "--event-handlers",
+                "console_cohesion+",
+                "--base-paths",
+                "/home/sondre/seapath_ssh_ws",
+                "--cmake-args",
+                "-DCMAKE_BUILD_TYPE=Debug"
+            ],
+            "problemMatcher": [
+                "$catkin-gcc"
+            ],
+            "group": "build",
+            "label": "colcon: build"
+        },
+    ],
+    "version": "2.0.0"
+}

@@ -8,7 +8,7 @@
 #include <cstring>
 #include <unistd.h>
 #include <vector>
-
+#include <sys/time.h>
 
 class SeaPathSocket {
 public:
@@ -20,6 +20,6 @@ public:
 private:
     int sockfd;
     struct sockaddr_in servaddr, cliaddr;
+    struct timeval read_timeout;
 };
-
 #endif //SEAPATH_SOCKET_H

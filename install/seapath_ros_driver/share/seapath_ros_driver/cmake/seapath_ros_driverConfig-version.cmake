@@ -1,0 +1,1 @@
+/home/sondre/seapath_ssh_ws/src/vortex-seapath-driver/build/seapath_ros_driver/ament_cmake_core/seapath_ros_driverConfig-version.cmake
