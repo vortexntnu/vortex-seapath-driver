@@ -32,6 +32,7 @@ ament_target_dependencies(${PROJECT_NAME}_node
   rclcpp 
   std_msgs
   geometry_msgs
+  vortex_msgs
   sensor_msgs
   tf2
   diagnostic_msgs

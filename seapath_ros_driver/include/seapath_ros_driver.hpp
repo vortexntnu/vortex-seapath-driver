@@ -15,6 +15,7 @@
 #include "tf2/transform_datatypes.h" 
 #include "tf2/LinearMath/Quaternion.h"
 #include "diagnostic_msgs/msg/diagnostic_status.hpp"
+#include "vortex_msgs/msg/KMBinary.hpp"
 
 #include "seapath_socket.hpp"
 
@@ -73,7 +74,8 @@ private:
     geometry_msgs::msg::TwistWithCovarianceStamped toTwistWithCovarianceStamped(const KMBinaryData& data);
     geometry_msgs::msg::Point getOriginPublisher();
     diagnostic_msgs::msg::DiagnosticStatus getDiagnosticPublisher();
-    sensor_msgs::msg::NavSatFix getNavSatFixPublisher(const KMBinaryData& data); 
+    sensor_msgs::msg::NavSatFix getNavSatFixPublisher(const KMBinaryData& data);
+    vortex_msgs::msg::KMBinaryData getKMBinaryPublisher(const KMBinaryData& data); 
 
     rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr pose_pub;
     rclcpp::Publisher<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr twist_pub;
