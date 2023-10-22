@@ -35,6 +35,7 @@ ament_target_dependencies(${PROJECT_NAME}_node
   sensor_msgs
   tf2
   diagnostic_msgs
+  vortex_msgs
 )
 
 install(

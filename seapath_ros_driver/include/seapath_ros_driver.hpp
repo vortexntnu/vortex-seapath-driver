@@ -1,5 +1,5 @@
-#ifndef SEAPATH_ROS_DRIVER_H
-#define SEAPATH_ROS_DRIVER_H
+#ifndef SEAPATH_DRIVER_H
+#define SEAPATH_DRIVER_H
 
 #include <iostream>
 #include <sstream>
@@ -15,6 +15,8 @@
 #include "tf2/transform_datatypes.h" 
 #include "tf2/LinearMath/Quaternion.h"
 #include "diagnostic_msgs/msg/diagnostic_status.hpp"
+//#include "vortex_msgs/msg/KMBinary.hpp"
+//Will give error msgs unless you have the vortex-msgs repo
 
 #include "seapath_socket.hpp"
 
@@ -63,7 +65,7 @@ public:
     ~SeaPathRosDriver() = default;
     KMBinaryData getKMBinaryData();
     void publish(KMBinaryData data);
-    
+    geometry_msgs::msg::Point getOriginPublisher();
 
 private:
     SeaPathSocket seaPathSocket;
@@ -71,10 +73,11 @@ private:
 
     geometry_msgs::msg::PoseWithCovarianceStamped toPoseWithCovarianceStamped(const KMBinaryData& data);
     geometry_msgs::msg::TwistWithCovarianceStamped toTwistWithCovarianceStamped(const KMBinaryData& data);
-    geometry_msgs::msg::Point getOriginPublisher();
+    
     diagnostic_msgs::msg::DiagnosticStatus getDiagnosticPublisher();
     sensor_msgs::msg::NavSatFix getNavSatFixPublisher(const KMBinaryData& data); 
-
+    //vortex_msgs::msg::KMBinaryPublisher(const KMBinaryData& data);
+    //Will give error msgs unless you have the vortex-msgs repo
     rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr pose_pub;
     rclcpp::Publisher<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr twist_pub;
     rclcpp::Publisher<geometry_msgs::msg::Point>::SharedPtr origin_pub;
@@ -99,4 +102,4 @@ private:
 
 };
 
-#endif //SEAPATH_ROS_DRIVER_HSocket
+#endif

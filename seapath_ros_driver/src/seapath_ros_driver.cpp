@@ -117,7 +117,49 @@ sensor_msgs::msg::NavSatFix SeaPathRosDriver::getNavSatFixPublisher(const KMBina
 
     return nav_msg;
 }
+/*vortex_msgs::msg::KMBinaryData getKMBinaryPublisher(const KMBinaryData& data) {
+    vortex_msgs::msg::KMBinary kmb_msg;
 
+    kmb_msg.utc_seconds = data.utc_seconds;
+    kmb_msg.utc_nanoseconds = data.utc_nanoseconds;
+
+    kmb_msg.status = data.status;
+
+    kmb_msg.latitude = data.latitude;
+    kmb_msg.longitude = data.longitude;
+    kmb_msg.ellipsoid_height = data.ellipsoid_height;
+
+    kmb_msg.roll = data.roll;
+    kmb_msg.pitch = data.pitch;
+    kmb_msg.heading = data.heading;
+    kmb_msg.heave = data.heave;
+
+    kmb_msg.roll_rate = data.roll_rate;
+    kmb_msg.pitch_rate = data.pitch_rate;
+    kmb_msg.yaw_rate = data.yaw_rate;
+
+    kmb_msg.north_velocity = data.north_velocity;
+    kmb_msg.east_velocity = data.east_velocity;
+    kmb_msg.down_velocity = data.down_velocity;
+
+    kmb_msg.latitude_error = data.latitude_error;
+    kmb_msg.longitude_error = data.longitude_error;
+    kmb_msg.height_error = data.height_error;
+    kmb_msg.roll_error = data.roll_error;
+    kmb_msg.pitch_error = data.pitch_error;
+    kmb_msg.heading_error = data.heading_error;
+    kmb_msg.heave_error = data.heave_error;
+
+    kmb_msg.north_acceleration = data.north_acceleration;
+    kmb_msg.east_acceleration = data.east_acceleration;
+    kmb_msg.down_acceleration = data.down_acceleration;
+
+    kmb_msg.delayed_heave_utc_seconds = data.delayed_heave_utc_seconds;
+    kmb_msg.delayed_heave_utc_nanoseconds = data.delayed_heave_utc_nanoseconds;
+    kmb_msg.delayed_heave = data.delayed_heave;
+
+    return kmb_msg;
+}*/ //Will give error msgs unless you have the vortex-msgs repo
 
 SeaPathRosDriver::SeaPathRosDriver(const char* UDP_IP, const int UDP_PORT, std::chrono::duration<double> timerPeriod) : Node("seapath_ros_driver_node"), seaPathSocket(UDP_IP, UDP_PORT), timerPeriod{timerPeriod}
 {

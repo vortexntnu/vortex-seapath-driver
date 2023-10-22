@@ -6,7 +6,6 @@ SeaPathSocket::SeaPathSocket(const char* UDP_IP, const int UDP_PORT) {
     if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
         perror("socket creation failed");
         socketConnected = false;
-        RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "9 \n");
         exit(EXIT_FAILURE);
     }
 
@@ -20,12 +19,10 @@ SeaPathSocket::SeaPathSocket(const char* UDP_IP, const int UDP_PORT) {
     if (bind(sockfd, (const struct sockaddr *)&servaddr, sizeof(servaddr)) < 0) {
         perror("bind failed");
         socketConnected = false;
-        RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "8 \n");
         exit(EXIT_FAILURE);// Bind to the specified IP address
     }
     //if the socket was created successfully
     else{
-        RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "10 \n");
         socketConnected = true;
     }
 
@@ -56,4 +53,3 @@ std::vector<uint8_t> SeaPathSocket::receiveData() {
         return std::vector<uint8_t>();
     }
 }
-
