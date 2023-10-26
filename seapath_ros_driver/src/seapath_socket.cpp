@@ -5,7 +5,7 @@
 SeaPathSocket::SeaPathSocket(const char* UDP_IP, const int UDP_PORT) {
     if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
         perror("socket creation failed");
-        socketConnected = false;
+        socket_connected = false;
         exit(EXIT_FAILURE);
     }
 
@@ -18,12 +18,12 @@ SeaPathSocket::SeaPathSocket(const char* UDP_IP, const int UDP_PORT) {
 
     if (bind(sockfd, (const struct sockaddr *)&servaddr, sizeof(servaddr)) < 0) {
         perror("bind failed");
-        socketConnected = false;
+        socket_connected = false;
         exit(EXIT_FAILURE);// Bind to the specified IP address
     }
     //if the socket was created successfully
     else{
-        socketConnected = true;
+        socket_connected = true;
     }
 
 }
@@ -45,11 +45,11 @@ std::vector<uint8_t> SeaPathSocket::receiveData() {
 
     //if socket is disconnected, n = -1. Returns empty vector, is not used anywhere if its dced
     if (n != -1){
-        socketConnected = true;
+        socket_connected = true;
         return std::vector<uint8_t>(buffer, buffer + n);
     }
     else{ 
-        socketConnected = false;
+        socket_connected = false;
         return std::vector<uint8_t>();
     }
 }

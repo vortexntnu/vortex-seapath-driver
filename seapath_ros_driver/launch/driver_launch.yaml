@@ -1,6 +1,0 @@
-launch:
-  - node:
-      pkg: seapath_ros_driver
-      exec: seapath_ros_driver_node
-      name: seapath_ros_node
-      #output: screen

@@ -8,17 +8,16 @@
 #include <chrono>
 #include <memory>
 
-#include "rclcpp/rclcpp.hpp" 
-#include "sensor_msgs/msg/nav_sat_fix.hpp"
-#include "geometry_msgs/msg/twist_with_covariance_stamped.hpp"
-#include "geometry_msgs/msg/pose_with_covariance_stamped.hpp"
-#include "tf2/transform_datatypes.h" 
-#include "tf2/LinearMath/Quaternion.h"
-#include "diagnostic_msgs/msg/diagnostic_status.hpp"
-//#include "vortex_msgs/msg/KMBinary.hpp"
-//Will give error msgs unless you have the vortex-msgs repo
+#include <rclcpp/rclcpp.hpp> 
+#include <sensor_msgs/msg/nav_sat_fix.hpp>
+#include <geometry_msgs/msg/twist_with_covariance_stamped.hpp>
+#include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
+#include <tf2/transform_datatypes.h>
+#include <tf2/LinearMath/Quaternion.h>
+#include <diagnostic_msgs/msg/diagnostic_status.hpp>
+#include <vortex_msgs/msg/KMBinary.hpp>
 
-#include "seapath_socket.hpp"
+#include <seapath_socket.hpp>
 
 using std::placeholders::_1;
 using namespace std::chrono_literals;
@@ -76,8 +75,7 @@ private:
     
     diagnostic_msgs::msg::DiagnosticStatus getDiagnosticPublisher();
     sensor_msgs::msg::NavSatFix getNavSatFixPublisher(const KMBinaryData& data); 
-    //vortex_msgs::msg::KMBinaryPublisher(const KMBinaryData& data);
-    //Will give error msgs unless you have the vortex-msgs repo
+    vortex_msgs::msg::KMBinaryPublisher(const KMBinaryData& data);
     rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr pose_pub;
     rclcpp::Publisher<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr twist_pub;
     rclcpp::Publisher<geometry_msgs::msg::Point>::SharedPtr origin_pub;
@@ -87,7 +85,7 @@ private:
 
     std::pair<double, double> displacement_wgs84(double north, double east);
     double convert_dms_to_dd(double dms);
-    void resetOrigin(const KMBinaryData& data);
+    void reset_origin(const KMBinaryData& data);
 
     double ORIGIN_N = -100;
     double ORIGIN_E = -100;

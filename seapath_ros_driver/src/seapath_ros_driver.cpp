@@ -82,7 +82,7 @@ geometry_msgs::msg::Point SeaPathRosDriver::getOriginPublisher(){
     origin_msg.set__y(ORIGIN_E);
     origin_msg.set__z(ORIGIN_H);
 
-    //RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "New Origin: " << "N:" << origin_msg.x << ", E:" << origin_msg.y << "H: " << origin_msg.z <<"\n");
+    RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "New Origin: " << "N:" << origin_msg.x << ", E:" << origin_msg.y << "H: " << origin_msg.z <<"\n");
     return origin_msg;
 }
 
@@ -90,12 +90,12 @@ geometry_msgs::msg::Point SeaPathRosDriver::getOriginPublisher(){
 diagnostic_msgs::msg::DiagnosticStatus SeaPathRosDriver::getDiagnosticPublisher(){
     //check if it's properly connected to the socket
     diagnostic_msgs::msg::DiagnosticStatus diagnostic_msg;
-    if(seaPathSocket.socketConnected == false){
+    if(seaPathSocket.socket_connected == false){
         diagnostic_msg.level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
         diagnostic_msg.name = "Diagnostic_connection_to_socket_status";
         diagnostic_msg.message = "Socket disconnected";
     }
-    else if (seaPathSocket.socketConnected == true){
+    else if (seaPathSocket.socket_connected == true){
         diagnostic_msg.level = diagnostic_msgs::msg::DiagnosticStatus::OK;
         diagnostic_msg.name = "Diagnostic_connection_to_socket_status";
         diagnostic_msg.message = "Socket connection is OK";
@@ -117,7 +117,7 @@ sensor_msgs::msg::NavSatFix SeaPathRosDriver::getNavSatFixPublisher(const KMBina
 
     return nav_msg;
 }
-/*vortex_msgs::msg::KMBinaryData getKMBinaryPublisher(const KMBinaryData& data) {
+vortex_msgs::msg::KMBinaryData getKMBinaryPublisher(const KMBinaryData& data) {
     vortex_msgs::msg::KMBinary kmb_msg;
 
     kmb_msg.utc_seconds = data.utc_seconds;
@@ -159,7 +159,7 @@ sensor_msgs::msg::NavSatFix SeaPathRosDriver::getNavSatFixPublisher(const KMBina
     kmb_msg.delayed_heave = data.delayed_heave;
 
     return kmb_msg;
-}*/ //Will give error msgs unless you have the vortex-msgs repo
+} 
 
 SeaPathRosDriver::SeaPathRosDriver(const char* UDP_IP, const int UDP_PORT, std::chrono::duration<double> timerPeriod) : Node("seapath_ros_driver_node"), seaPathSocket(UDP_IP, UDP_PORT), timerPeriod{timerPeriod}
 {
@@ -192,7 +192,7 @@ KMBinaryData SeaPathRosDriver::parseKMBinaryData(std::vector<uint8_t> data) {
         std::memcpy(dest, data.data() + offset, size);
         offset += size;
     };
-    if(seaPathSocket.socketConnected){
+    if(seaPathSocket.socket_connected){
         copyData(result.start_id, 4);
         copyData(&result.dgm_length, 2);
         copyData(&result.dgm_version, 2);
@@ -257,7 +257,7 @@ std::pair<double, double> SeaPathRosDriver::displacement_wgs84(double north, dou
 
 }
 
-void SeaPathRosDriver::resetOrigin(const KMBinaryData& data){
+void SeaPathRosDriver::reset_origin(const KMBinaryData& data){
     
     float north = data.latitude;
     float east = data.longitude;
@@ -278,8 +278,6 @@ double SeaPathRosDriver::convert_dms_to_dd(double dms) {
 }
 
 void SeaPathRosDriver::timer_callback(){
-
-    // Publish
     KMBinaryData data = getKMBinaryData();
     publish(data);
     }
