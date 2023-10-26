@@ -1,4 +1,0 @@
-[01m[K/home/sondre/seapath_ssh_ws/src/vortex-seapath-driver/seapath_ros_driver/src/seapath_ros_driver.cpp:[m[K In member function ‘[01m[Kvoid SeaPathRosDriver::publish(KMBinaryData)[m[K’:
-[01m[K/home/sondre/seapath_ssh_ws/src/vortex-seapath-driver/seapath_ros_driver/src/seapath_ros_driver.cpp:181:45:[m[K [01;35m[Kwarning: [m[Kunused parameter ‘[01m[Kdata[m[K’ [[01;35m[K]8;;https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wunused-parameter-Wunused-parameter]8;;[m[K]
-  181 | void SeaPathRosDriver::publish([01;35m[KKMBinaryData data[m[K) {
-      |                                [01;35m[K~~~~~~~~~~~~~^~~~[m[K
