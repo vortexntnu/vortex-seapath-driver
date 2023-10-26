@@ -1,8 +1,8 @@
-#include "seapath_socket.hpp"
-#include "seapath_ros_driver.hpp"
+#include <seapath_socket.hpp>
+#include <seapath_ros_driver.hpp>
 
 
-SeaPathSocket::SeaPathSocket(const char* UDP_IP, const int UDP_PORT) {
+seapath_socket::seapath_socket(const char* UDP_IP, const int UDP_PORT) {
     if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
         perror("socket creation failed");
         socket_connected = false;
@@ -28,11 +28,11 @@ SeaPathSocket::SeaPathSocket(const char* UDP_IP, const int UDP_PORT) {
 
 }
 
-SeaPathSocket::~SeaPathSocket() {
+seapath_socket::~seapath_socket() {
     close(sockfd);
 }
 
-std::vector<uint8_t> SeaPathSocket::receiveData() {
+std::vector<uint8_t> seapath_socket::receiveData() {
     uint8_t buffer[1024];
     int len = sizeof(cliaddr);
 

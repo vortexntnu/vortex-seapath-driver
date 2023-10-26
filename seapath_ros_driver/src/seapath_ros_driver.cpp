@@ -1,6 +1,6 @@
-#include "seapath_ros_driver.hpp"
+#include <seapath_ros_driver.hpp>
 
-geometry_msgs::msg::PoseWithCovarianceStamped SeaPathRosDriver::toPoseWithCovarianceStamped(const KMBinaryData& data) {
+geometry_msgs::msg::PoseWithCovarianceStamped SeaPathRosDriver::to_pose_with_covariance_stamped(const KMBinaryData& data) {
     geometry_msgs::msg::PoseWithCovarianceStamped pose_msg;
     rclcpp::Time current_time;
     pose_msg.header.stamp = current_time = this->now();
@@ -42,7 +42,7 @@ geometry_msgs::msg::PoseWithCovarianceStamped SeaPathRosDriver::toPoseWithCovari
     return pose_msg;
 }
 
-geometry_msgs::msg::TwistWithCovarianceStamped SeaPathRosDriver::toTwistWithCovarianceStamped(const KMBinaryData& data) {
+geometry_msgs::msg::TwistWithCovarianceStamped SeaPathRosDriver::to_twist_with_covariance_stamped(const KMBinaryData& data) {
     geometry_msgs::msg::TwistWithCovarianceStamped twist_msg;
     rclcpp::Time current_time;
     twist_msg.header.stamp = current_time = this->now();
@@ -75,7 +75,7 @@ geometry_msgs::msg::TwistWithCovarianceStamped SeaPathRosDriver::toTwistWithCova
 }
 
 
-geometry_msgs::msg::Point SeaPathRosDriver::getOriginPublisher(){
+geometry_msgs::msg::Point SeaPathRosDriver::get_origin_publisher(){
     
     geometry_msgs::msg::Point origin_msg;
     origin_msg.set__x(ORIGIN_N);
@@ -87,7 +87,7 @@ geometry_msgs::msg::Point SeaPathRosDriver::getOriginPublisher(){
 }
 
 
-diagnostic_msgs::msg::DiagnosticStatus SeaPathRosDriver::getDiagnosticPublisher(){
+diagnostic_msgs::msg::DiagnosticStatus SeaPathRosDriver::get_diagnostic_publisher(){
     //check if it's properly connected to the socket
     diagnostic_msgs::msg::DiagnosticStatus diagnostic_msg;
     if(seaPathSocket.socket_connected == false){
@@ -104,7 +104,7 @@ diagnostic_msgs::msg::DiagnosticStatus SeaPathRosDriver::getDiagnosticPublisher(
 }
 
 
-sensor_msgs::msg::NavSatFix SeaPathRosDriver::getNavSatFixPublisher(const KMBinaryData& data){
+sensor_msgs::msg::NavSatFix SeaPathRosDriver::get_navsatfix_publisher(const KMBinaryData& data){
     sensor_msgs::msg::NavSatFix nav_msg;
     rclcpp::Time current_time;
 
@@ -117,7 +117,7 @@ sensor_msgs::msg::NavSatFix SeaPathRosDriver::getNavSatFixPublisher(const KMBina
 
     return nav_msg;
 }
-vortex_msgs::msg::KMBinaryData getKMBinaryPublisher(const KMBinaryData& data) {
+vortex_msgs::msg::KMBinaryData kmbinary_publisher(const KMBinaryData& data) {
     vortex_msgs::msg::KMBinary kmb_msg;
 
     kmb_msg.utc_seconds = data.utc_seconds;
@@ -173,17 +173,17 @@ SeaPathRosDriver::SeaPathRosDriver(const char* UDP_IP, const int UDP_PORT, std::
 
 }                
 
-KMBinaryData SeaPathRosDriver::getKMBinaryData() {
+KMBinaryData SeaPathRosDriver::get_kmbinary_data() {
     std::vector<uint8_t> data = seaPathSocket.receiveData();
 
     if (data.empty()){
         RCLCPP_WARN_STREAM(rclcpp::get_logger("rclcpp"), "WARNING: Receive data timed out");
     }
 
-    return parseKMBinaryData(data);
+    return parse_kmbinary_data(data);
 }
 
-KMBinaryData SeaPathRosDriver::parseKMBinaryData(std::vector<uint8_t> data) {
+KMBinaryData SeaPathRosDriver::parse_kmbinary_data(std::vector<uint8_t> data) {
     KMBinaryData result;
     size_t offset = 0;
 
@@ -228,11 +228,12 @@ KMBinaryData SeaPathRosDriver::parseKMBinaryData(std::vector<uint8_t> data) {
 
 void SeaPathRosDriver::publish(KMBinaryData data) {
 
-    auto pose = toPoseWithCovarianceStamped(data);
-    auto twist = toTwistWithCovarianceStamped(data);
-    auto origin = getOriginPublisher();
-    auto current_diagnostic = getDiagnosticPublisher();
-    auto navSatFix = getNavSatFixPublisher(data);
+    auto pose = to_pose_with_covariance_stamped(data);
+    auto twist = to_twist_with_covariance_stamped(data);
+    auto origin = get_origin_publisher();
+    auto current_diagnostic = get_diagnostic_publisher();
+    auto navSatFix = get_navsatfix_publisher(data);
+    auto KMBinaryData = kmbinary_data(data);
 
     diagnosticStatus_pub->publish(current_diagnostic);
 
@@ -242,6 +243,7 @@ void SeaPathRosDriver::publish(KMBinaryData data) {
         pose_pub->publish(pose);
         twist_pub->publish(twist);
         nav_pub->publish(navSatFix);
+        kmbinary_pub->publish(KMBinaryData);
     }
 }
 
@@ -278,6 +280,6 @@ double SeaPathRosDriver::convert_dms_to_dd(double dms) {
 }
 
 void SeaPathRosDriver::timer_callback(){
-    KMBinaryData data = getKMBinaryData();
+    KMBinaryData data = get_kmbinary_data();
     publish(data);
     }

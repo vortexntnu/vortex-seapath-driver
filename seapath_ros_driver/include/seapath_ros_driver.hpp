@@ -62,20 +62,20 @@ class SeaPathRosDriver : public rclcpp::Node{
 public: 
     SeaPathRosDriver(const char* UDP_IP, const int UDP_PORT, std::chrono::duration<double> timerPeriod);
     ~SeaPathRosDriver() = default;
-    KMBinaryData getKMBinaryData();
+    KMBinaryData get_kmbinary_data();
     void publish(KMBinaryData data);
-    geometry_msgs::msg::Point getOriginPublisher();
+    geometry_msgs::msg::Point get_origin_publisher();
 
 private:
-    SeaPathSocket seaPathSocket;
-    KMBinaryData parseKMBinaryData(std::vector<uint8_t> data);
+    seapath_socket seaPathSocket;
+    KMBinaryData parse_kmbinary_data(std::vector<uint8_t> data);
 
-    geometry_msgs::msg::PoseWithCovarianceStamped toPoseWithCovarianceStamped(const KMBinaryData& data);
-    geometry_msgs::msg::TwistWithCovarianceStamped toTwistWithCovarianceStamped(const KMBinaryData& data);
+    geometry_msgs::msg::PoseWithCovarianceStamped to_pose_with_covariance_stamped(const KMBinaryData& data);
+    geometry_msgs::msg::TwistWithCovarianceStamped to_twist_with_covariance_stamped(const KMBinaryData& data);
     
-    diagnostic_msgs::msg::DiagnosticStatus getDiagnosticPublisher();
-    sensor_msgs::msg::NavSatFix getNavSatFixPublisher(const KMBinaryData& data); 
-    vortex_msgs::msg::KMBinaryPublisher(const KMBinaryData& data);
+    diagnostic_msgs::msg::DiagnosticStatus get_diagnostic_publisher();
+    sensor_msgs::msg::NavSatFix get_navsatfix_publisher(const KMBinaryData& data); 
+    vortex_msgs::msg::KMBinaryData kmbinary_publisher(const KMBinaryData& data);
     rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr pose_pub;
     rclcpp::Publisher<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr twist_pub;
     rclcpp::Publisher<geometry_msgs::msg::Point>::SharedPtr origin_pub;
