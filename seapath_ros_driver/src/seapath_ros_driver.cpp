@@ -117,7 +117,7 @@ sensor_msgs::msg::NavSatFix SeaPathRosDriver::get_navsatfix_publisher(const KMBi
 
     return nav_msg;
 }
-vortex_msgs::msg::KMBinary  SeaPathRosDriver::get_kmbinary_publisher(const KMBinaryData& data) {
+vortex_msgs::msg::KMBinary SeaPathRosDriver::get_kmbinary_publisher(const KMBinaryData& data) {
     vortex_msgs::msg::KMBinary kmb_msg;
 
     kmb_msg.utc_seconds = data.utc_seconds;
