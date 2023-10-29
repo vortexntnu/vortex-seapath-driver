@@ -1,4 +1,4 @@
-#include <seapath_ros_driver.hpp>
+#include "seapath_ros_driver.hpp"
 
 geometry_msgs::msg::PoseWithCovarianceStamped SeaPathRosDriver::to_pose_with_covariance_stamped(const KMBinaryData& data) {
     geometry_msgs::msg::PoseWithCovarianceStamped pose_msg;
@@ -117,7 +117,7 @@ sensor_msgs::msg::NavSatFix SeaPathRosDriver::get_navsatfix_publisher(const KMBi
 
     return nav_msg;
 }
-vortex_msgs::msg::KMBinaryData kmbinary_publisher(const KMBinaryData& data) {
+vortex_msgs::msg::KMBinary  SeaPathRosDriver::get_kmbinary_publisher(const KMBinaryData& data) {
     vortex_msgs::msg::KMBinary kmb_msg;
 
     kmb_msg.utc_seconds = data.utc_seconds;
@@ -168,13 +168,13 @@ SeaPathRosDriver::SeaPathRosDriver(const char* UDP_IP, const int UDP_PORT, std::
     origin_pub = this->create_publisher<geometry_msgs::msg::Point>("/sensor/seapath/origin", 10);
     diagnosticStatus_pub = this->create_publisher<diagnostic_msgs::msg::DiagnosticStatus>("/sensor/seapath/diagnostic_msg", 10);
     nav_pub =  this->create_publisher<sensor_msgs::msg::NavSatFix>("/sensor/seapath/NavSatFix", 10);
-
+    kmbinary_pub = this->create_publisher<vortex_msgs::msg::KMBinary>("/sensor/seapath/vortex_msgs",10);
     _timer = this->create_wall_timer(timerPeriod, std::bind(&SeaPathRosDriver::timer_callback, this));
 
 }                
 
 KMBinaryData SeaPathRosDriver::get_kmbinary_data() {
-    std::vector<uint8_t> data = seaPathSocket.receiveData();
+    std::vector<uint8_t> data = seaPathSocket.recieve_data();
 
     if (data.empty()){
         RCLCPP_WARN_STREAM(rclcpp::get_logger("rclcpp"), "WARNING: Receive data timed out");
@@ -233,7 +233,7 @@ void SeaPathRosDriver::publish(KMBinaryData data) {
     auto origin = get_origin_publisher();
     auto current_diagnostic = get_diagnostic_publisher();
     auto navSatFix = get_navsatfix_publisher(data);
-    auto KMBinaryData = kmbinary_data(data);
+    auto KMBinaryData = get_kmbinary_publisher(data);
 
     diagnosticStatus_pub->publish(current_diagnostic);
 

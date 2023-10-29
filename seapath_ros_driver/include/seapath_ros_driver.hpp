@@ -15,9 +15,9 @@
 #include <tf2/transform_datatypes.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include <diagnostic_msgs/msg/diagnostic_status.hpp>
-#include <vortex_msgs/msg/KMBinary.hpp>
+#include <vortex_msgs/msg/km_binary.hpp>
 
-#include <seapath_socket.hpp>
+#include "seapath_socket.hpp"
 
 using std::placeholders::_1;
 using namespace std::chrono_literals;
@@ -67,7 +67,7 @@ public:
     geometry_msgs::msg::Point get_origin_publisher();
 
 private:
-    seapath_socket seaPathSocket;
+    SeaPathSocket seaPathSocket;
     KMBinaryData parse_kmbinary_data(std::vector<uint8_t> data);
 
     geometry_msgs::msg::PoseWithCovarianceStamped to_pose_with_covariance_stamped(const KMBinaryData& data);
@@ -75,12 +75,13 @@ private:
     
     diagnostic_msgs::msg::DiagnosticStatus get_diagnostic_publisher();
     sensor_msgs::msg::NavSatFix get_navsatfix_publisher(const KMBinaryData& data); 
-    vortex_msgs::msg::KMBinaryData kmbinary_publisher(const KMBinaryData& data);
+    vortex_msgs::msg::KMBinary get_kmbinary_publisher(const KMBinaryData& data);
     rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr pose_pub;
     rclcpp::Publisher<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr twist_pub;
     rclcpp::Publisher<geometry_msgs::msg::Point>::SharedPtr origin_pub;
     rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticStatus>::SharedPtr diagnosticStatus_pub;
     rclcpp::Publisher<sensor_msgs::msg::NavSatFix>::SharedPtr nav_pub;
+    rclcpp::Publisher<vortex_msgs::msg::KMBinary>::SharedPtr kmbinary_pub;
 
 
     std::pair<double, double> displacement_wgs84(double north, double east);
@@ -90,7 +91,6 @@ private:
     double ORIGIN_N = -100;
     double ORIGIN_E = -100;
     double ORIGIN_H = -100;
-    
     void timer_callback();
     rclcpp::TimerBase::SharedPtr _timer;
     const std::chrono::duration<double> timerPeriod;

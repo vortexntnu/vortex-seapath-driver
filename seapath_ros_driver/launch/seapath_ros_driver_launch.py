@@ -1,7 +1,7 @@
 from launch import LaunchDescription
 from launch_ros.actions import Node
 
-def generate_launch_description(_):
+def generate_launch_description():
     return LaunchDescription([
         Node(
             package = 'seapath_ros_driver',

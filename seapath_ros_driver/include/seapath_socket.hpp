@@ -10,11 +10,11 @@
 #include <vector>
 #include <sys/time.h>
 
-class seapath_socket {
+class SeaPathSocket {
 public:
-    seapath_socket(const char* UDP_IP, const int UDP_PORT);
-    ~seapath_socket();
-    std::vector<uint8_t> receiveData();
+    SeaPathSocket(const char* UDP_IP, const int UDP_PORT);
+    ~SeaPathSocket();
+    std::vector<uint8_t> recieve_data();
     bool socket_connected;
 
 private:
