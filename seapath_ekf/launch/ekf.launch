@@ -1,3 +1,0 @@
-<launch>
-  <node pkg="seapath_ekf" type="seapath_ekf_node" name="seapath_ekf_node" output="screen"/>
-</launch>

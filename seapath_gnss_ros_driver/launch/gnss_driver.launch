@@ -1,4 +1,0 @@
-<launch>
-  <!-- <node pkg="seapath_ned_to_enu_converter" type="seapath_ned_to_enu_converter_node" name="seapath_ned_to_enu_converter_node" output="screen"/> -->
-  <node pkg="seapath_gnss_ros_driver" type="seapath_gnss_ros_driver_node" name="seapath_gnss_ros_driver_node" output="screen"/>
-</launch>

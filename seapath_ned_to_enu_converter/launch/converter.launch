@@ -1,5 +1,0 @@
-<launch>
-
-    <node name="seapath_ned_to_enu_converter" pkg="seapath_ned_to_enu_converter_node" type="seapath_ned_to_enu_converter_node" output="screen">
-    </node>
-</launch>

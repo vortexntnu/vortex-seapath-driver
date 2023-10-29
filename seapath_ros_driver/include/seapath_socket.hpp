@@ -8,17 +8,18 @@
 #include <cstring>
 #include <unistd.h>
 #include <vector>
-
+#include <sys/time.h>
 
 class SeaPathSocket {
 public:
     SeaPathSocket(const char* UDP_IP, const int UDP_PORT);
     ~SeaPathSocket();
-    std::vector<uint8_t> receiveData();
+    std::vector<uint8_t> recieve_data();
+    bool socket_connected;
 
 private:
     int sockfd;
     struct sockaddr_in servaddr, cliaddr;
+    struct timeval read_timeout;
 };
-
 #endif //SEAPATH_SOCKET_H
