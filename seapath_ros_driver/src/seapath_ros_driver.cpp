@@ -75,7 +75,7 @@ geometry_msgs::msg::TwistWithCovarianceStamped SeaPathRosDriver::to_twist_with_c
 }
 
 
-geometry_msgs::msg::Point SeaPathRosDriver::get_origin_publisher(){
+geometry_msgs::msg::Point SeaPathRosDriver::get_origin_message(){
     
     geometry_msgs::msg::Point origin_msg;
     origin_msg.set__x(ORIGIN_N);
@@ -87,7 +87,7 @@ geometry_msgs::msg::Point SeaPathRosDriver::get_origin_publisher(){
 }
 
 
-diagnostic_msgs::msg::DiagnosticStatus SeaPathRosDriver::get_diagnostic_publisher(){
+diagnostic_msgs::msg::DiagnosticStatus SeaPathRosDriver::get_diagnostic_message(){
     //check if it's properly connected to the socket
     diagnostic_msgs::msg::DiagnosticStatus diagnostic_msg;
     if(seaPathSocket.socket_connected == false){
@@ -104,7 +104,7 @@ diagnostic_msgs::msg::DiagnosticStatus SeaPathRosDriver::get_diagnostic_publishe
 }
 
 
-sensor_msgs::msg::NavSatFix SeaPathRosDriver::get_navsatfix_publisher(const KMBinaryData& data){
+sensor_msgs::msg::NavSatFix SeaPathRosDriver::get_navsatfix_message(const KMBinaryData& data){
     sensor_msgs::msg::NavSatFix nav_msg;
     rclcpp::Time current_time;
 
@@ -117,7 +117,7 @@ sensor_msgs::msg::NavSatFix SeaPathRosDriver::get_navsatfix_publisher(const KMBi
 
     return nav_msg;
 }
-vortex_msgs::msg::KMBinary SeaPathRosDriver::get_kmbinary_publisher(const KMBinaryData& data) {
+vortex_msgs::msg::KMBinary SeaPathRosDriver::get_kmbinary_message(const KMBinaryData& data) {
     vortex_msgs::msg::KMBinary kmb_msg;
 
     kmb_msg.utc_seconds = data.utc_seconds;
@@ -230,10 +230,10 @@ void SeaPathRosDriver::publish(KMBinaryData data) {
 
     auto pose = to_pose_with_covariance_stamped(data);
     auto twist = to_twist_with_covariance_stamped(data);
-    auto origin = get_origin_publisher();
-    auto current_diagnostic = get_diagnostic_publisher();
-    auto navSatFix = get_navsatfix_publisher(data);
-    auto KMBinaryData = get_kmbinary_publisher(data);
+    auto origin = get_origin_message();
+    auto current_diagnostic = get_diagnostic_message();
+    auto navSatFix = get_navsatfix_message(data);
+    auto KMBinaryData = get_kmbinary_message(data);
 
     diagnosticStatus_pub->publish(current_diagnostic);
 

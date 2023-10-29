@@ -22,4 +22,4 @@ private:
     struct sockaddr_in servaddr, cliaddr;
     struct timeval read_timeout;
 };
-#endif //seapath_socket_h
+#endif //SEAPATH_SOCKET_H

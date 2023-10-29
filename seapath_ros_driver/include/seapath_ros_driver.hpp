@@ -64,7 +64,7 @@ public:
     ~SeaPathRosDriver() = default;
     KMBinaryData get_kmbinary_data();
     void publish(KMBinaryData data);
-    geometry_msgs::msg::Point get_origin_publisher();
+    geometry_msgs::msg::Point get_origin_message();
 
 private:
     SeaPathSocket seaPathSocket;
@@ -73,9 +73,9 @@ private:
     geometry_msgs::msg::PoseWithCovarianceStamped to_pose_with_covariance_stamped(const KMBinaryData& data);
     geometry_msgs::msg::TwistWithCovarianceStamped to_twist_with_covariance_stamped(const KMBinaryData& data);
     
-    diagnostic_msgs::msg::DiagnosticStatus get_diagnostic_publisher();
-    sensor_msgs::msg::NavSatFix get_navsatfix_publisher(const KMBinaryData& data); 
-    vortex_msgs::msg::KMBinary get_kmbinary_publisher(const KMBinaryData& data);
+    diagnostic_msgs::msg::DiagnosticStatus get_diagnostic_message();
+    sensor_msgs::msg::NavSatFix get_navsatfix_message(const KMBinaryData& data); 
+    vortex_msgs::msg::KMBinary get_kmbinary_message(const KMBinaryData& data);
     rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr pose_pub;
     rclcpp::Publisher<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr twist_pub;
     rclcpp::Publisher<geometry_msgs::msg::Point>::SharedPtr origin_pub;
@@ -94,10 +94,6 @@ private:
     void timer_callback();
     rclcpp::TimerBase::SharedPtr _timer;
     const std::chrono::duration<double> timerPeriod;
-
-
-    
-
 };
 
-#endif
+#endif //SEAPATH_DRIVER_H
