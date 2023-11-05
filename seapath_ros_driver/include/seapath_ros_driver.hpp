@@ -58,6 +58,10 @@ struct KMBinaryData {
 };
 
 
+std::ostream& operator<<(std::ostream& os, const KMBinaryData& data);
+void printKMBinaryData(const KMBinaryData& data);
+
+
 class SeaPathRosDriver : public rclcpp::Node{
 public: 
     SeaPathRosDriver(const char* UDP_IP, const int UDP_PORT, std::chrono::duration<double> timerPeriod);
