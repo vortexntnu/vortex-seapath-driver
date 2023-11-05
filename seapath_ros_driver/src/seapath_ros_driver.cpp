@@ -107,6 +107,7 @@ diagnostic_msgs::msg::DiagnosticStatus SeaPathRosDriver::get_diagnostic_message(
 sensor_msgs::msg::NavSatFix SeaPathRosDriver::get_navsatfix_message(const KMBinaryData& data){
     sensor_msgs::msg::NavSatFix nav_msg;
     rclcpp::Time current_time;
+    auto pose_cov = to_pose_with_covariance_stamped(data);
 
     nav_msg.header.stamp = current_time = this->now();
     nav_msg.header.frame_id = "seapath/frame/NavSatFix";
@@ -115,8 +116,17 @@ sensor_msgs::msg::NavSatFix SeaPathRosDriver::get_navsatfix_message(const KMBina
     nav_msg.longitude = data.longitude;
     nav_msg.altitude = data.ellipsoid_height;
 
+
+    for (int i = 0; i < 3; ++i){
+        nav_msg.position_covariance[i + 0] = pose_cov.pose.covariance[i + 0];
+        nav_msg.position_covariance[i + 3] = pose_cov.pose.covariance[i + 7];
+        nav_msg.position_covariance[i + 6] = pose_cov.pose.covariance[i + 14];
+    }
+
     return nav_msg;
 }
+
+
 vortex_msgs::msg::KMBinary SeaPathRosDriver::get_kmbinary_message(const KMBinaryData& data) {
     vortex_msgs::msg::KMBinary kmb_msg;
 
@@ -283,3 +293,45 @@ void SeaPathRosDriver::timer_callback(){
     KMBinaryData data = get_kmbinary_data();
     publish(data);
     }
+
+
+std::ostream& operator<<(std::ostream& os, const KMBinaryData& data){
+    os << "Start ID: " << data.start_id << std::endl;
+    os << "Dgm Length: " << data.dgm_length << std::endl;
+    os << "Dgm Version: " << data.dgm_version << std::endl;
+    os << "UTC Seconds: " << data.utc_seconds << std::endl;
+    os << "UTC Nanoseconds: " << data.utc_nanoseconds << std::endl;
+    os << "Status: " << data.status << std::endl;
+    os << "Latitude: " << data.latitude << std::endl;
+    os << "Longitude: " << data.longitude << std::endl;
+    os << "Ellipsoid Height: " << data.ellipsoid_height << std::endl;
+    os << "Roll: " << data.roll << std::endl;
+    os << "Pitch: " << data.pitch << std::endl;
+    os << "Heading: " << data.heading << std::endl;
+    os << "Heave: " << data.heave << std::endl;
+    os << "Roll Rate: " << data.roll_rate << std::endl;
+    os << "Pitch Rate: " << data.pitch_rate << std::endl;
+    os << "Yaw Rate: " << data.yaw_rate << std::endl;
+    os << "North Velocity: " << data.north_velocity << std::endl;
+    os << "East Velocity: " << data.east_velocity << std::endl;
+    os << "Down Velocity: " << data.down_velocity << std::endl;
+    os << "Latitude Error: " << data.latitude_error << std::endl;
+    os << "Longitude Error: " << data.longitude_error << std::endl;
+    os << "Height Error: " << data.height_error << std::endl;
+    os << "Roll Error: " << data.roll_error << std::endl;
+    os << "Pitch Error: " << data.pitch_error << std::endl;
+    os << "Heading Error: " << data.heading_error << std::endl;
+    os << "Heave Error: " << data.heave_error << std::endl;
+    os << "North Acceleration: " << data.north_acceleration << std::endl;
+    os << "East Acceleration: " << data.east_acceleration << std::endl;
+    os << "Down Acceleration: " << data.down_acceleration << std::endl;
+    os << "Delayed Heave UTC Seconds: " << data.delayed_heave_utc_seconds << std::endl;
+    os << "Delayed Heave UTC Nanoseconds: " << data.delayed_heave_utc_nanoseconds << std::endl;
+    os << "Delayed Heave: " << data.delayed_heave << std::endl;
+    return os;
+}
+
+
+void printKMBinaryData(const KMBinaryData& data) {
+    std::cout << data;
+}

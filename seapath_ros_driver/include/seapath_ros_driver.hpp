@@ -58,6 +58,10 @@ struct KMBinaryData {
 };
 
 
+std::ostream& operator<<(std::ostream& os, const KMBinaryData& data);
+void printKMBinaryData(const KMBinaryData& data);
+
+
 class SeaPathRosDriver : public rclcpp::Node{
 public: 
     SeaPathRosDriver(const char* UDP_IP, const int UDP_PORT, std::chrono::duration<double> timerPeriod);
@@ -82,7 +86,6 @@ private:
     rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticStatus>::SharedPtr diagnosticStatus_pub;
     rclcpp::Publisher<sensor_msgs::msg::NavSatFix>::SharedPtr nav_pub;
     rclcpp::Publisher<vortex_msgs::msg::KMBinary>::SharedPtr kmbinary_pub;
-
 
     std::pair<double, double> displacement_wgs84(double north, double east);
     double convert_dms_to_dd(double dms);
