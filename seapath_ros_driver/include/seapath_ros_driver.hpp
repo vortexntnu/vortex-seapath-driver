@@ -87,7 +87,6 @@ private:
     rclcpp::Publisher<sensor_msgs::msg::NavSatFix>::SharedPtr nav_pub;
     rclcpp::Publisher<vortex_msgs::msg::KMBinary>::SharedPtr kmbinary_pub;
 
-
     std::pair<double, double> displacement_wgs84(double north, double east);
     double convert_dms_to_dd(double dms);
     void reset_origin(const KMBinaryData& data);

@@ -12,10 +12,8 @@ int main(int argc, char** argv) {
     seaPathRosDriverNode->get_parameter_or("UDP_IP", UDP_IP, std::string("0.0.0.0"));
     seaPathRosDriverNode->get_parameter_or("UDP_PORT", UDP_PORT, 31421);
 
-
     rclcpp::spin(seaPathRosDriverNode);
     rclcpp::shutdown();
-
 
     return 0;
 }
