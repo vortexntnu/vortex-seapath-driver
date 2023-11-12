@@ -15,6 +15,7 @@
 #include <tf2/transform_datatypes.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include <diagnostic_msgs/msg/diagnostic_status.hpp>
+#include <diagnostic_msgs/msg/diagnostic_array.hpp>
 #include <vortex_msgs/msg/km_binary.hpp>
 
 #include "seapath_socket.hpp"
@@ -80,10 +81,13 @@ private:
     diagnostic_msgs::msg::DiagnosticStatus get_diagnostic_message();
     sensor_msgs::msg::NavSatFix get_navsatfix_message(const KMBinaryData& data); 
     vortex_msgs::msg::KMBinary get_kmbinary_message(const KMBinaryData& data);
+    diagnostic_msgs::msg::DiagnosticArray get_diagnostic_array(diagnostic_msgs::msg::DiagnosticStatus diagnostic_msg);
+    
     rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr pose_pub;
     rclcpp::Publisher<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr twist_pub;
     rclcpp::Publisher<geometry_msgs::msg::Point>::SharedPtr origin_pub;
     rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticStatus>::SharedPtr diagnosticStatus_pub;
+    rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr diagnosticArray_pub;
     rclcpp::Publisher<sensor_msgs::msg::NavSatFix>::SharedPtr nav_pub;
     rclcpp::Publisher<vortex_msgs::msg::KMBinary>::SharedPtr kmbinary_pub;
 
