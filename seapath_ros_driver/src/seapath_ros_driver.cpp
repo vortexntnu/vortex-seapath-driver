@@ -104,6 +104,13 @@ diagnostic_msgs::msg::DiagnosticStatus SeaPathRosDriver::get_diagnostic_message(
 }
 
 
+diagnostic_msgs::msg::DiagnosticArray SeaPathRosDriver::get_diagnostic_array(diagnostic_msgs::msg::DiagnosticStatus diagnostic_msg){
+    diagnostic_msgs::msg::DiagnosticArray diagnostic_array;
+    diagnostic_array.status.push_back(diagnostic_msg);
+    return diagnostic_array;
+}
+
+
 sensor_msgs::msg::NavSatFix SeaPathRosDriver::get_navsatfix_message(const KMBinaryData& data){
     sensor_msgs::msg::NavSatFix nav_msg;
     rclcpp::Time current_time;
@@ -177,6 +184,7 @@ SeaPathRosDriver::SeaPathRosDriver(const char* UDP_IP, const int UDP_PORT, std::
     twist_pub = this->create_publisher<geometry_msgs::msg::TwistWithCovarianceStamped>("/sensor/seapath/twist/ned", 10);
     origin_pub = this->create_publisher<geometry_msgs::msg::Point>("/sensor/seapath/origin", 10);
     diagnosticStatus_pub = this->create_publisher<diagnostic_msgs::msg::DiagnosticStatus>("/sensor/seapath/diagnostic_msg", 10);
+    diagnosticArray_pub = this->create_publisher<diagnostic_msgs::msg::DiagnosticArray>("/sensor/seapath/diagnostic_array", 10);
     nav_pub =  this->create_publisher<sensor_msgs::msg::NavSatFix>("/sensor/seapath/NavSatFix", 10);
     kmbinary_pub = this->create_publisher<vortex_msgs::msg::KMBinary>("/sensor/seapath/vortex_msgs",10);
     _timer = this->create_wall_timer(timerPeriod, std::bind(&SeaPathRosDriver::timer_callback, this));
@@ -242,10 +250,12 @@ void SeaPathRosDriver::publish(KMBinaryData data) {
     auto twist = to_twist_with_covariance_stamped(data);
     auto origin = get_origin_message();
     auto current_diagnostic = get_diagnostic_message();
+    auto diagnostic_array = get_diagnostic_array(current_diagnostic);
     auto navSatFix = get_navsatfix_message(data);
     auto KMBinaryData = get_kmbinary_message(data);
 
     diagnosticStatus_pub->publish(current_diagnostic);
+    diagnosticArray_pub->publish(diagnostic_array);
 
     if(current_diagnostic.level == diagnostic_msgs::msg::DiagnosticStatus::OK)
     {
