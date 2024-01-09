@@ -17,6 +17,7 @@
 #include <diagnostic_msgs/msg/diagnostic_status.hpp>
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
 #include <vortex_msgs/msg/km_binary.hpp>
+#include <nav_msgs/msg/odometry.hpp>
 
 #include "seapath_socket.hpp"
 
@@ -77,7 +78,8 @@ private:
 
     geometry_msgs::msg::PoseWithCovarianceStamped to_pose_with_covariance_stamped(const KMBinaryData& data);
     geometry_msgs::msg::TwistWithCovarianceStamped to_twist_with_covariance_stamped(const KMBinaryData& data);
-    
+    nav_msgs::msg::Odometry to_odometry(const KMBinaryData& data);
+
     diagnostic_msgs::msg::DiagnosticStatus get_diagnostic_message();
     sensor_msgs::msg::NavSatFix get_navsatfix_message(const KMBinaryData& data); 
     vortex_msgs::msg::KMBinary get_kmbinary_message(const KMBinaryData& data);
@@ -90,6 +92,7 @@ private:
     rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr diagnosticArray_pub;
     rclcpp::Publisher<sensor_msgs::msg::NavSatFix>::SharedPtr nav_pub;
     rclcpp::Publisher<vortex_msgs::msg::KMBinary>::SharedPtr kmbinary_pub;
+    rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odometry_pub;
 
     std::pair<double, double> displacement_wgs84(double north, double east);
     double convert_dms_to_dd(double dms);

@@ -74,6 +74,21 @@ geometry_msgs::msg::TwistWithCovarianceStamped SeaPathRosDriver::to_twist_with_c
     return twist_msg;
 }
 
+nav_msgs::msg::Odometry SeaPathRosDriver::to_odometry(const KMBinaryData& data) {
+    nav_msgs::msg::Odometry odometry_msg;
+    rclcpp::Time current_time;
+    odometry_msg.header.stamp = current_time = this->now();
+
+    odometry_msg.header.frame_id = "seapath/frame/pose";
+
+    odometry_msg.child_frame_id = "seapath/frame/twist";
+
+    odometry_msg.pose = to_pose_with_covariance_stamped(data).pose;
+    odometry_msg.twist = to_twist_with_covariance_stamped(data).twist;
+
+    return odometry_msg;
+}
+
 
 geometry_msgs::msg::Point SeaPathRosDriver::get_origin_message(){
     
@@ -182,6 +197,7 @@ SeaPathRosDriver::SeaPathRosDriver(const char* UDP_IP, const int UDP_PORT, std::
 {
     pose_pub = this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>("/sensor/seapath/pose/ned", 10);
     twist_pub = this->create_publisher<geometry_msgs::msg::TwistWithCovarianceStamped>("/sensor/seapath/twist/ned", 10);
+    odometry_pub = this->create_publisher<nav_msgs::msg::Odometry>("/sensor/seapath/odometry/ned", 10);
     origin_pub = this->create_publisher<geometry_msgs::msg::Point>("/sensor/seapath/origin", 10);
     diagnosticStatus_pub = this->create_publisher<diagnostic_msgs::msg::DiagnosticStatus>("/sensor/seapath/diagnostic_msg", 10);
     diagnosticArray_pub = this->create_publisher<diagnostic_msgs::msg::DiagnosticArray>("/sensor/seapath/diagnostic_array", 10);
@@ -248,6 +264,7 @@ void SeaPathRosDriver::publish(KMBinaryData data) {
 
     auto pose = to_pose_with_covariance_stamped(data);
     auto twist = to_twist_with_covariance_stamped(data);
+    auto odometry = to_odometry(data);
     auto origin = get_origin_message();
     auto current_diagnostic = get_diagnostic_message();
     auto diagnostic_array = get_diagnostic_array(current_diagnostic);
@@ -262,6 +279,7 @@ void SeaPathRosDriver::publish(KMBinaryData data) {
         origin_pub->publish(origin);
         pose_pub->publish(pose);
         twist_pub->publish(twist);
+        odometry_pub->publish(odometry);
         nav_pub->publish(navSatFix);
         kmbinary_pub->publish(KMBinaryData);
     }

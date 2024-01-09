@@ -16,6 +16,7 @@ find_package(sensor_msgs      REQUIRED)
 find_package(tf2              REQUIRED)
 find_package(diagnostic_msgs  REQUIRED)
 find_package(vortex_msgs      REQUIRED)
+find_package(nav_msgs      REQUIRED)
 include_directories(include)
 
 add_executable(${PROJECT_NAME}_node
@@ -32,6 +33,7 @@ ament_target_dependencies(${PROJECT_NAME}_node
   tf2
   diagnostic_msgs
   vortex_msgs
+  nav_msgs
 )
 
 install(
