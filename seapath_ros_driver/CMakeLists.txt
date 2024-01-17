@@ -14,6 +14,7 @@ find_package(std_msgs         REQUIRED)
 find_package(geometry_msgs    REQUIRED)
 find_package(sensor_msgs      REQUIRED)
 find_package(tf2              REQUIRED)
+find_package(tf2_ros          REQUIRED)
 find_package(diagnostic_msgs  REQUIRED)
 find_package(vortex_msgs      REQUIRED)
 include_directories(include)
@@ -30,6 +31,7 @@ ament_target_dependencies(${PROJECT_NAME}_node
   geometry_msgs
   sensor_msgs
   tf2
+  tf2_ros
   diagnostic_msgs
   vortex_msgs
 )
