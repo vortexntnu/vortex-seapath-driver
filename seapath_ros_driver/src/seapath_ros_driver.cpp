@@ -205,7 +205,10 @@ KMBinaryData SeaPathRosDriver::parse_kmbinary_data(std::vector<uint8_t> data) {
     KMBinaryData result;
     size_t offset = 0;
 
-    // Helper lambda to copy data and update the offset
+    /**
+     * @brief Helper lambda to copy data and update the offset
+     * 
+     */
     auto copyData = [&data, &offset](void* dest, size_t size) {
         std::memcpy(dest, data.data() + offset, size);
         offset += size;
