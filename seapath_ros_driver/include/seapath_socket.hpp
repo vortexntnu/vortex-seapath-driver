@@ -20,11 +20,6 @@ public:
  * @param UDP_PORT The port number for UDP socket communication.
  */
     SeaPathSocket(const char* UDP_IP, const int UDP_PORT);
-
-/**
- * @brief Destroy the Sea Path Socket object
- * 
- */
     ~SeaPathSocket();
 
 /**

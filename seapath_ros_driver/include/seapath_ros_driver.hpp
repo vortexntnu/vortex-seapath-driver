@@ -24,10 +24,6 @@ using std::placeholders::_1;
 using namespace std::chrono_literals;
 
 
-/**
- * @brief The system data.
- * 
- */
 struct KMBinaryData {
     char start_id[4];
     uint16_t dgm_length;
@@ -64,21 +60,10 @@ struct KMBinaryData {
 };
 
 
-/**
- * @brief Out-stream override used when printing out the KMBinaryData
- * 
- * @param os The out-stream
- * @param data The systems data
- * @return std::ostream& Returens the out-stream filled with the systems data
- */
 std::ostream& operator<<(std::ostream& os, const KMBinaryData& data);
 void printKMBinaryData(const KMBinaryData& data);
 
 
-/**
- * @brief The seapathdriver ros node.
- * 
- */
 class SeaPathRosDriver : public rclcpp::Node{
 public: 
 
@@ -90,18 +75,7 @@ public:
  * @param timerPeriod Timer period publishing topics on the running node
  */
     SeaPathRosDriver(const char* UDP_IP, const int UDP_PORT, std::chrono::duration<double> timerPeriod);
-    
-/**
- * @brief Destroy the Sea Path Ros Driver object
- * 
- */
     ~SeaPathRosDriver() = default;
-
-/**
- * @brief Get the kmbinary data object
- * 
- * @return KMBinaryData object
- */
     KMBinaryData get_kmbinary_data();
 
 /**
@@ -119,10 +93,6 @@ public:
     geometry_msgs::msg::Point get_origin_message();
 
 private:
-/**
- * @brief The socket we are connecting to.
- * 
- */
     SeaPathSocket seaPathSocket;
 
 /**
@@ -181,46 +151,12 @@ private:
  */
     diagnostic_msgs::msg::DiagnosticArray get_diagnostic_array(diagnostic_msgs::msg::DiagnosticStatus diagnostic_msg);
 
-/**
- * @brief Publishes the position covariance message
- * 
- */
     rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr pose_pub;
-
-/**
- * @brief Publishes the twist covariance message
- * 
- */
     rclcpp::Publisher<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr twist_pub;
-
-/**
- * @brief Publishes the origin position message
- * 
- */
     rclcpp::Publisher<geometry_msgs::msg::Point>::SharedPtr origin_pub;
-
-/**
- * @brief Publishes the diagnostic status message
- * 
- */
     rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticStatus>::SharedPtr diagnosticStatus_pub;
-
-/**
- * @brief Publishes the diagnostic array message
- * 
- */
     rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr diagnosticArray_pub
-
-/**
- * @brief Publishes the navsatfix location message
- * 
- */
     rclcpp::Publisher<sensor_msgs::msg::NavSatFix>::SharedPtr nav_pub;
-
-/**
- * @brief Publishes the KMBinary object as a message
- * 
- */
     rclcpp::Publisher<vortex_msgs::msg::KMBinary>::SharedPtr kmbinary_pub;
 
 /**
