@@ -1,55 +1,99 @@
 #include "seapath_socket.hpp"
 #include "seapath_ros_driver.hpp"
 
+namespace seapath {
 
-SeaPathSocket::SeaPathSocket(const char* UDP_IP, const int UDP_PORT) {
-    if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-        perror("socket creation failed");
-        socket_connected = false;
-        exit(EXIT_FAILURE);
-    }
+Socket::Socket(std::string UDP_IP, u_int16_t UDP_PORT,std::vector<uint8_t>& shared_vector, std::mutex& mutex, bool& packet_ready, bool& socket_connected) 
+: addr_ (UDP_IP), port_ (UDP_PORT), shared_vector_ (shared_vector), mutex_ (mutex), packet_ready_ (packet_ready),socket_connected_ (socket_connected) {
+}
 
-    memset(&servaddr, 0, sizeof(servaddr));
-    memset(&cliaddr, 0, sizeof(cliaddr));
+void Socket::create_socket(){
+        client_socket_ = socket(AF_INET, SOCK_DGRAM, 0);
+        if(client_socket_ == -1){
+            throw std::runtime_error("Error creating socket");
+        }
 
-    servaddr.sin_family = AF_INET;
-    servaddr.sin_addr.s_addr = inet_addr(UDP_IP);
-    servaddr.sin_port = htons(UDP_PORT);
+    memset(&servaddr_, 0, sizeof(servaddr_));
 
-    if (bind(sockfd, (const struct sockaddr *)&servaddr, sizeof(servaddr)) < 0) {
-        perror("bind failed");
-        socket_connected = false;
-        exit(EXIT_FAILURE);// Bind to the specified IP address
-    }
-    //if the socket was created successfully
-    else{
-        socket_connected = true;
-    }
+    // Set up server address information
+    servaddr_.sin_family = AF_INET;
+    servaddr_.sin_port = htons(port_);
+    servaddr_.sin_addr.s_addr = inet_addr(addr_.c_str());
 
 }
 
-SeaPathSocket::~SeaPathSocket() {
-    close(sockfd);
+void Socket::connect_to_socket(){
+    socket_connected_ = false;
+    while(true){
+        std::cout << "[INFO] Attempting to connect to server " << addr_ << " at port " << port_ << std::endl;
+        if (connect(client_socket_, (struct sockaddr*)&servaddr_, sizeof(servaddr_)) == -1) {
+            int timeout_delay = 5;
+            std::cerr << "Error connecting to server! Trying again in " << timeout_delay << " seconds" << std::endl;
+            std::this_thread::sleep_until(std::chrono::system_clock::now() + std::chrono::seconds(timeout_delay));
+            continue;
+        }
+        else{
+            std::cout << "[INFO] Established connection with server " << addr_ << " at port " << port_ << std::endl;
+            socket_connected_ = true;
+            break;
+        }
+        
+    }
+    
 }
 
-std::vector<uint8_t> SeaPathSocket::recieve_data() {
-    uint8_t buffer[1024];
-    int len = sizeof(cliaddr);
+void Socket::receive_data() {
+    std::vector<uint8_t> packet_data;
+    while(true){
+
 
     //set the socket timout to x sec and x µsec
-    read_timeout.tv_sec  = 1;
-    read_timeout.tv_usec = 0;
+    // read_timeout.tv_sec  = 1;
+    // read_timeout.tv_usec = 0;
 
-    setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &read_timeout, sizeof(read_timeout));
-    int n = recvfrom(sockfd, buffer, sizeof(buffer), MSG_WAITALL, (struct sockaddr *) &cliaddr, (socklen_t *)&len);
+    // setsockopt(client_socket_, SOL_SOCKET, SO_RCVTIMEO, &read_timeout, sizeof(read_timeout));
 
-    //if socket is disconnected, n = -1. Returns empty vector, is not used anywhere if its dced
-    if (n != -1){
-        socket_connected = true;
-        return std::vector<uint8_t>(buffer, buffer + n);
+     // Receive data from the server
+        int bytes_read = recv(client_socket_, buffer_, sizeof(buffer_), 0); //Different sizes ranging up to 2^16
+        // std::cout << "Received " << bytes_read << " bytes!" << std::endl;
+
+    if (bytes_read == -1) { //Cannot read data
+            std::cerr << "Error receiving data from the server" << std::endl;
+            connect_to_socket();
+        } else if (bytes_read == 0) { // Connection closed by the server
+            std::cout << "[INFO] Server closed the connection" << std::endl;
+            connect_to_socket();
+        } else {
+            buffer_[bytes_read] = '\0'; // Make sure the buffer is getting ended (should not be necessary)
+
+    std::cout << "[INFO] received data from address " << addr_ << std::endl;
+
+
     }
-    else{ 
-        socket_connected = false;
-        return std::vector<uint8_t>();
+    for (int i = 0; i < bytes_read; i++){ // All data is stored in the vector
+        packet_data.push_back(buffer_[i]);
+                }
+    if(!packet_ready_){
+                std::unique_lock<std::mutex> lock(mutex_); // Locks the shared vector (extra protection for thread-safe handling)
+                shared_vector_ = packet_data;
+                packet_ready_ = true;
+                lock.unlock();
+            }
+    packet_data.clear(); // Resets the vector for a new packet-collection
+    for (int i = 0; i < bytes_read; i++){ // All data is stored in the vector
+        packet_data.push_back(buffer_[i]);
     }
+               
+}   
 }
+
+void Socket::close_socket(){
+    std::cout << "[INFO] Closing connection to server " << addr_ << " at port " << port_ << std::endl;
+    close(client_socket_);
+}
+
+Socket::~Socket() {
+    std::cout << "[INFO] Closing connection to server " << addr_ << " at port " << port_ << std::endl;
+    close(client_socket_);
+}
+} // namespace seapath

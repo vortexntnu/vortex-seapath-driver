@@ -9,17 +9,59 @@
 #include <unistd.h>
 #include <vector>
 #include <sys/time.h>
+#include <chrono>
+#include <mutex>
 
-class SeaPathSocket {
+namespace seapath{
+class Socket {
 public:
-    SeaPathSocket(const char* UDP_IP, const int UDP_PORT);
-    ~SeaPathSocket();
-    std::vector<uint8_t> recieve_data();
-    bool socket_connected;
+
+
+   Socket(std::string UDP_IP, u_int16_t UDP_PORT,std::vector<uint8_t>& shared_vector, std::mutex& mutex, bool& packet_ready, bool& socket_connected);
+   
+    ~Socket();
+
+    void close_socket();
+
+
+    void create_socket();
+
+    void connect_to_socket();
+
+
+    void receive_data();
+
+    /**
+* @brief Socket file descriptor.
+*/
+    int client_socket_;
+
+    std::string addr_;
+    uint16_t port_;
+
+    uint8_t buffer_[1024];
+
+     std::vector<uint8_t>& shared_vector_;
+
+    std::mutex& mutex_;
+
+    bool& packet_ready_;
+
+    bool& socket_connected_;
+
+
+    sockaddr_in servaddr_;
 
 private:
-    int sockfd;
-    struct sockaddr_in servaddr, cliaddr;
-    struct timeval read_timeout;
+
+
+
+
+/**
+ * @brief Server and client address structures for socket communication.
+ */
+
+
 };
+} // namespace seapath
 #endif //SEAPATH_SOCKET_H
