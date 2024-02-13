@@ -72,7 +72,7 @@ public:
  * @param UDP_IP The UDP IP-adress
  * @param UDP_PORT The UDP Port that is connected
  */
-    Driver(std::string UDP_IP, uint16_t UDP_PORT);
+    Driver();
     ~Driver() = default;
 
 
@@ -182,6 +182,8 @@ private:
     std::vector<uint8_t> shared_vector_;
     bool packet_ready_;
     bool socket_connected_;
+    std::string UDP_IP_;
+      uint16_t UDP_PORT_;
 
     double ORIGIN_N = -100;
     double ORIGIN_E = -100;

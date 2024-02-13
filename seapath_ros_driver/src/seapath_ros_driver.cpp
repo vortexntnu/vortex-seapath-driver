@@ -2,7 +2,7 @@
 
 namespace seapath{
 
-Driver::Driver(std::string UDP_IP, uint16_t UDP_PORT) : Node("seapath_ros_driver_node"){
+Driver::Driver() : Node("seapath_ros_driver_node"){
     odom_pub_ = this->create_publisher<nav_msgs::msg::Odometry>("/sensor/seapath/pose/ned", 10);
     origin_pub_ = this->create_publisher<geometry_msgs::msg::Point>("/sensor/seapath/origin", 10);
     diagnosticStatus_pub_ = this->create_publisher<diagnostic_msgs::msg::DiagnosticStatus>("/sensor/seapath/diagnostic_msg", 10);
@@ -10,33 +10,52 @@ Driver::Driver(std::string UDP_IP, uint16_t UDP_PORT) : Node("seapath_ros_driver
     nav_pub_ =  this->create_publisher<sensor_msgs::msg::NavSatFix>("/sensor/seapath/NavSatFix", 10);
     kmbinary_pub_ = this->create_publisher<vortex_msgs::msg::KMBinary>("/sensor/seapath/vortex_msgs",10);
     tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
-
+    declare_parameter<std::string>("UDP_IP", "0.0.0.0");
+    declare_parameter<u_int16_t>("UDP_PORT", 31421);
+    UDP_IP_ = get_parameter("UDP_IP").as_string();
+    UDP_PORT_ = get_parameter("UDP_PORT").as_int();
     shared_vector_ = std::vector<uint8_t>();
     packet_ready_ = false;
     socket_connected_ = false;
-    std::thread(&Driver::SetupSocket, this, this->get_parameter("ip_addr").as_string(), this->get_parameter("port").as_int()).detach();
+    std::thread(&Driver::SetupSocket, this, UDP_IP_, UDP_PORT_).detach();
     timer_ = this->create_wall_timer(std::chrono::milliseconds(100), std::bind(&Driver::timer_callback, this));
     
 
 
 }     
 
-void Driver::SetupSocket(std::string UDP_IP, uint16_t UDP_PORT){
-    Socket Socket (UDP_IP, UDP_PORT, shared_vector_,mutex_,packet_ready_,socket_connected_);
+void Driver::SetupSocket(std::string UDP_IP_, uint16_t UDP_PORT_){
+    Socket Socket (UDP_IP_, UDP_PORT_, shared_vector_,mutex_,packet_ready_,socket_connected_);
     Socket.create_socket();
     Socket.connect_to_socket();
     Socket.receive_data();
 }
 
 void Driver::timer_callback(){
+    try
+    {
+    if(!packet_ready_){
+        return;
+    }
+    
+    std::unique_lock<std::mutex> lock(mutex_); // Thread-safe handling
     process_kmbinary_data(shared_vector_);
     publish(data_);
+
+    packet_ready_ = false;
+    lock.unlock();
+    
     }
+    catch(const std::exception& e)
+    {
+        std::cerr << e.what() << '\n';
+    }
+    
+}
 
 void Driver::publish(KMBinaryData data) {
 
     auto odom = get_odometry_message(data);
-    auto origin = get_origin_message();
     auto current_diagnostic = get_diagnostic_message();
     auto diagnostic_array = get_diagnostic_array(current_diagnostic);
     auto navSatFix = get_navsatfix_message(data);
@@ -57,20 +76,8 @@ void Driver::publish(KMBinaryData data) {
 }
 
 void Driver::process_kmbinary_data(std::vector<uint8_t> data){
-    try{
-        if(!packet_ready_){
-            return;
-        }
-        std::unique_lock<std::mutex> lock(mutex_); // Thread-safe handlin
         data_ = parse_kmbinary_data(data);
 
-        packet_ready_ = false; // Ready to receive new packet
-        lock.unlock();
-    }
-    catch(const std::exception& e){
-    std::cerr << e.what() << '\n';
-       
-}
 }
 
 KMBinaryData Driver::parse_kmbinary_data(std::vector<uint8_t> data) {

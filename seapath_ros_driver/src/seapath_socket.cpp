@@ -26,15 +26,22 @@ void Socket::connect_to_socket(){
     socket_connected_ = false;
     while(true){
         std::cout << "[INFO] Attempting to connect to server " << addr_ << " at port " << port_ << std::endl;
-        if (connect(client_socket_, (struct sockaddr*)&servaddr_, sizeof(servaddr_)) == -1) {
+        // Bind the socket with the server address
+        int n = bind(client_socket_, (const struct sockaddr *)&servaddr_, sizeof(servaddr_)); 
+        if(n< 0) {
+        throw std::runtime_error("Error binding socket");
+    }
+        //connectionless socket, 0 return means it's setup, not connected to server socket
+        // int n = connect(client_socket_, (struct sockaddr*)&servaddr_, sizeof(servaddr_));
+        std::cerr << "Error connecting to server! errno: " << errno << std::endl;
+        if (n < 0) {
             int timeout_delay = 5;
             std::cerr << "Error connecting to server! Trying again in " << timeout_delay << " seconds" << std::endl;
             std::this_thread::sleep_until(std::chrono::system_clock::now() + std::chrono::seconds(timeout_delay));
             continue;
         }
         else{
-            std::cout << "[INFO] Established connection with server " << addr_ << " at port " << port_ << std::endl;
-            socket_connected_ = true;
+            std::cout << "[INFO] Socket setup and ready to receive from address " << addr_ << " at port " << port_ << std::endl;
             break;
         }
         
@@ -46,30 +53,46 @@ void Socket::receive_data() {
     std::vector<uint8_t> packet_data;
     while(true){
 
-
+    std::cout << "[INFO] Waiting for data from server " << addr_ << " at port " << port_ << std::endl;
     //set the socket timout to x sec and x µsec
-    // read_timeout.tv_sec  = 1;
-    // read_timeout.tv_usec = 0;
+   
 
-    // setsockopt(client_socket_, SOL_SOCKET, SO_RCVTIMEO, &read_timeout, sizeof(read_timeout));
+    struct timeval tv;
+    tv.tv_sec = 3;
+    tv.tv_usec = 0;
+    setsockopt(client_socket_, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
 
-     // Receive data from the server
-        int bytes_read = recv(client_socket_, buffer_, sizeof(buffer_), 0); //Different sizes ranging up to 2^16
+    //  // Receive data from the server
+    //     int bytes_read = recv(client_socket_, buffer_, sizeof(buffer_), 0); //Different sizes ranging up to 2^16
+
+    int bytes_read = recvfrom(client_socket_, buffer_, sizeof(buffer_), 0, (struct sockaddr *) &servaddr_, (socklen_t *)sizeof(servaddr_)); 
         // std::cout << "Received " << bytes_read << " bytes!" << std::endl;
+        std::cout << "Received " << bytes_read << " bytes!" << std::endl;
+        std::cout << "Received " << buffer_ << " bytes!" << std::endl;
+        std::cout << "Received byte nr 5" << buffer_[4] << " bytes!" << std::endl;
 
-    if (bytes_read == -1) { //Cannot read data
-            std::cerr << "Error receiving data from the server" << std::endl;
-            connect_to_socket();
-        } else if (bytes_read == 0) { // Connection closed by the server
-            std::cout << "[INFO] Server closed the connection" << std::endl;
-            connect_to_socket();
-        } else {
+        if(bytes_read < 0){
+            socket_connected_ = false;
+            continue;
+        }
+        else{
+            socket_connected_ = true;
             buffer_[bytes_read] = '\0'; // Make sure the buffer is getting ended (should not be necessary)
+        }
+
+    // if (bytes_read == -1) { //Cannot read data
+    //         std::cerr << "Error receiving data from the server" << std::endl;
+    //         connect_to_socket();
+    //     } else if (bytes_read == 0) { // Connection closed by the server
+    //         std::cout << "[INFO] Server closed the connection" << std::endl;
+    //         connect_to_socket();
+    //     } else {
+    //         buffer_[bytes_read] = '\0'; // Make sure the buffer is getting ended (should not be necessary)
 
     std::cout << "[INFO] received data from address " << addr_ << std::endl;
 
 
-    }
+    // }
     for (int i = 0; i < bytes_read; i++){ // All data is stored in the vector
         packet_data.push_back(buffer_[i]);
                 }
@@ -80,9 +103,6 @@ void Socket::receive_data() {
                 lock.unlock();
             }
     packet_data.clear(); // Resets the vector for a new packet-collection
-    for (int i = 0; i < bytes_read; i++){ // All data is stored in the vector
-        packet_data.push_back(buffer_[i]);
-    }
                
 }   
 }
