@@ -18,22 +18,21 @@ void Socket::create_socket(){
     // Set up server address information
     servaddr_.sin_family = AF_INET;
     servaddr_.sin_port = htons(port_);
-    servaddr_.sin_addr.s_addr = inet_addr(addr_.c_str());
+    // servaddr_.sin_addr.s_addr = inet_addr(addr_.c_str());
+    servaddr_.sin_addr.s_addr = INADDR_ANY;
 
 }
 
 void Socket::connect_to_socket(){
     socket_connected_ = false;
     while(true){
+        std::cout << "[INFO] Client socket " << client_socket_ << std::endl;
         std::cout << "[INFO] Attempting to connect to server " << addr_ << " at port " << port_ << std::endl;
         // Bind the socket with the server address
-        int n = bind(client_socket_, (const struct sockaddr *)&servaddr_, sizeof(servaddr_)); 
-        if(n< 0) {
-        throw std::runtime_error("Error binding socket");
-    }
+        int n = bind(client_socket_, (struct sockaddr *)&servaddr_, sizeof(servaddr_)); 
+        // int n = connect(client_socket_, (struct sockaddr *)&servaddr_, sizeof(servaddr_)); 
         //connectionless socket, 0 return means it's setup, not connected to server socket
         // int n = connect(client_socket_, (struct sockaddr*)&servaddr_, sizeof(servaddr_));
-        std::cerr << "Error connecting to server! errno: " << errno << std::endl;
         if (n < 0) {
             int timeout_delay = 5;
             std::cerr << "Error connecting to server! Trying again in " << timeout_delay << " seconds" << std::endl;
@@ -60,12 +59,13 @@ void Socket::receive_data() {
     struct timeval tv;
     tv.tv_sec = 3;
     tv.tv_usec = 0;
-    setsockopt(client_socket_, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
+    //setsockopt(client_socket_, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
 
     //  // Receive data from the server
     //     int bytes_read = recv(client_socket_, buffer_, sizeof(buffer_), 0); //Different sizes ranging up to 2^16
 
-    int bytes_read = recvfrom(client_socket_, buffer_, sizeof(buffer_), 0, (struct sockaddr *) &servaddr_, (socklen_t *)sizeof(servaddr_)); 
+    int bytes_read = recvfrom(client_socket_, buffer_, sizeof(buffer_), MSG_WAITALL, (struct sockaddr *) &servaddr_, (socklen_t *)sizeof(servaddr_));
+    // int bytes_read = recv(client_socket_, buffer_, sizeof(buffer_), 0); //Different sizes ranging up to 2^16 
         // std::cout << "Received " << bytes_read << " bytes!" << std::endl;
         std::cout << "Received " << bytes_read << " bytes!" << std::endl;
         std::cout << "Received " << buffer_ << " bytes!" << std::endl;
