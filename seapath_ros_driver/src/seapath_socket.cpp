@@ -30,9 +30,7 @@ void Socket::connect_to_socket(){
         std::cout << "[INFO] Attempting to connect to server " << addr_ << " at port " << port_ << std::endl;
         // Bind the socket with the server address
         int n = bind(client_socket_, (struct sockaddr *)&servaddr_, sizeof(servaddr_)); 
-        // int n = connect(client_socket_, (struct sockaddr *)&servaddr_, sizeof(servaddr_)); 
-        //connectionless socket, 0 return means it's setup, not connected to server socket
-        // int n = connect(client_socket_, (struct sockaddr*)&servaddr_, sizeof(servaddr_));
+     
         if (n < 0) {
             int timeout_delay = 5;
             std::cerr << "Error connecting to server! Trying again in " << timeout_delay << " seconds" << std::endl;
@@ -53,23 +51,18 @@ void Socket::receive_data() {
     while(true){
 
     std::cout << "[INFO] Waiting for data from server " << addr_ << " at port " << port_ << std::endl;
-    //set the socket timout to x sec and x µsec
-   
 
-    struct timeval tv;
-    tv.tv_sec = 3;
-    tv.tv_usec = 0;
+    //set the socket timout to x sec and x µsec
+    // struct timeval tv;
+    // tv.tv_sec = 3;
+    // tv.tv_usec = 0;
     //setsockopt(client_socket_, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
 
-    //  // Receive data from the server
-    //     int bytes_read = recv(client_socket_, buffer_, sizeof(buffer_), 0); //Different sizes ranging up to 2^16
+        // Receive data from the server
+        int bytes_read = recv(client_socket_, buffer_, sizeof(buffer_), 0); 
 
-    int bytes_read = recvfrom(client_socket_, buffer_, sizeof(buffer_), MSG_WAITALL, (struct sockaddr *) &servaddr_, (socklen_t *)sizeof(servaddr_));
-    // int bytes_read = recv(client_socket_, buffer_, sizeof(buffer_), 0); //Different sizes ranging up to 2^16 
-        // std::cout << "Received " << bytes_read << " bytes!" << std::endl;
         std::cout << "Received " << bytes_read << " bytes!" << std::endl;
-        std::cout << "Received " << buffer_ << " bytes!" << std::endl;
-        std::cout << "Received byte nr 5" << buffer_[4] << " bytes!" << std::endl;
+
 
         if(bytes_read < 0){
             socket_connected_ = false;
@@ -80,31 +73,19 @@ void Socket::receive_data() {
             buffer_[bytes_read] = '\0'; // Make sure the buffer is getting ended (should not be necessary)
         }
 
-    // if (bytes_read == -1) { //Cannot read data
-    //         std::cerr << "Error receiving data from the server" << std::endl;
-    //         connect_to_socket();
-    //     } else if (bytes_read == 0) { // Connection closed by the server
-    //         std::cout << "[INFO] Server closed the connection" << std::endl;
-    //         connect_to_socket();
-    //     } else {
-    //         buffer_[bytes_read] = '\0'; // Make sure the buffer is getting ended (should not be necessary)
+        for (int i = 0; i < bytes_read; i++){ // All data is stored in the vector
+            packet_data.push_back(buffer_[i]);
+        }
 
-    std::cout << "[INFO] received data from address " << addr_ << std::endl;
+        if(!packet_ready_){
+            std::unique_lock<std::mutex> lock(mutex_); // Locks the shared vector (extra protection for thread-safe handling)
+            shared_vector_ = packet_data;
+            packet_ready_ = true;
+            lock.unlock();
+        }
 
-
-    // }
-    for (int i = 0; i < bytes_read; i++){ // All data is stored in the vector
-        packet_data.push_back(buffer_[i]);
-                }
-    if(!packet_ready_){
-                std::unique_lock<std::mutex> lock(mutex_); // Locks the shared vector (extra protection for thread-safe handling)
-                shared_vector_ = packet_data;
-                packet_ready_ = true;
-                lock.unlock();
-            }
-    packet_data.clear(); // Resets the vector for a new packet-collection
-               
-}   
+        packet_data.clear(); // Resets the vector for a new packet-collection
+    }   
 }
 
 void Socket::close_socket(){

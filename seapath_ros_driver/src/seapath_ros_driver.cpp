@@ -3,7 +3,7 @@
 namespace seapath{
 
 Driver::Driver() : Node("seapath_ros_driver_node"){
-    odom_pub_ = this->create_publisher<nav_msgs::msg::Odometry>("/sensor/seapath/pose/ned", 10);
+    odom_pub_ = this->create_publisher<nav_msgs::msg::Odometry>("/sensor/seapath/odom/ned", 10);
     origin_pub_ = this->create_publisher<geometry_msgs::msg::Point>("/sensor/seapath/origin", 10);
     diagnosticStatus_pub_ = this->create_publisher<diagnostic_msgs::msg::DiagnosticStatus>("/sensor/seapath/diagnostic_msg", 10);
     diagnosticArray_pub_ = this->create_publisher<diagnostic_msgs::msg::DiagnosticArray>("/sensor/seapath/diagnostic_array", 10);
@@ -98,6 +98,11 @@ KMBinaryData Driver::parse_kmbinary_data(std::vector<uint8_t> data) {
         copyData(&result.dgm_version, 2);
         copyData(&result.utc_seconds, 4);
         copyData(&result.utc_nanoseconds, 4);
+        copyData(&result.status, 4);
+        copyData(&result.latitude, 8);
+        copyData(&result.longitude, 8);
+        copyData(&result.ellipsoid_height, 4);
+        copyData(&result.roll, 4);
         copyData(&result.pitch, 4);
         copyData(&result.heading, 4);
         copyData(&result.heave, 4);
