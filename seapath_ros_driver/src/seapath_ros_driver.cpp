@@ -5,12 +5,20 @@ namespace seapath
 
     Driver::Driver() : Node("seapath_ros_driver_node")
     {
-        odom_pub_ = this->create_publisher<nav_msgs::msg::Odometry>("/sensor/seapath/odom/ned", 10);
-        origin_pub_ = this->create_publisher<geometry_msgs::msg::Point>("/sensor/seapath/origin", 10);
-        diagnosticArray_pub_ = this->create_publisher<diagnostic_msgs::msg::DiagnosticArray>("/sensor/seapath/diagnostic_array", 10);
-        nav_pub_ = this->create_publisher<sensor_msgs::msg::NavSatFix>("/sensor/seapath/NavSatFix", 10);
-        kmbinary_pub_ = this->create_publisher<vortex_msgs::msg::KMBinary>("/sensor/seapath/vortex_msgs", 10);
+        // Define the quality of service profile for publisher and subscriber
+        rmw_qos_profile_t qos_profile = rmw_qos_profile_sensor_data;
+        auto qos_sensor_data = rclcpp::QoS(rclcpp::QoSInitialization(qos_profile.history, 1), qos_profile);
+        rmw_qos_profile_t qos_profile_transient_local = rmw_qos_profile_parameters;
+        qos_profile_transient_local.durability = RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL;
+        auto qos_transient_local = rclcpp::QoS(rclcpp::QoSInitialization(qos_profile_transient_local.history, 1), qos_profile_transient_local);
+
+        odom_pub_ = this->create_publisher<nav_msgs::msg::Odometry>("/sensor/seapath/odom/ned", qos_sensor_data);
+        origin_pub_ = this->create_publisher<geometry_msgs::msg::Point>("/sensor/seapath/origin", qos_transient_local);
+        diagnosticArray_pub_ = this->create_publisher<diagnostic_msgs::msg::DiagnosticArray>("/sensor/seapath/diagnostic_array", qos_transient_local);
+        nav_pub_ = this->create_publisher<sensor_msgs::msg::NavSatFix>("/sensor/seapath/NavSatFix", qos_sensor_data);
+        kmbinary_pub_ = this->create_publisher<vortex_msgs::msg::KMBinary>("/sensor/seapath/vortex_msgs", qos_sensor_data);
         tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
+
         declare_parameter<std::string>("UDP_IP", "10.0.1.10");
         declare_parameter<u_int16_t>("UDP_PORT", 31421);
         UDP_IP_ = get_parameter("UDP_IP").as_string();
@@ -18,6 +26,7 @@ namespace seapath
         shared_vector_ = std::vector<uint8_t>();
         packet_ready_ = false;
         socket_connected_ = false;
+        
         std::thread(&Driver::SetupSocket, this, UDP_IP_, UDP_PORT_).detach();
         timer_ = this->create_wall_timer(std::chrono::milliseconds(100), std::bind(&Driver::timer_callback, this));
     }
