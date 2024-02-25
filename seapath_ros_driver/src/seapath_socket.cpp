@@ -23,8 +23,7 @@ namespace seapath
         // Set up server address information
         servaddr_.sin_family = AF_INET;
         servaddr_.sin_port = htons(port_);
-        // servaddr_.sin_addr.s_addr = inet_addr(addr_.c_str());
-        servaddr_.sin_addr.s_addr = INADDR_ANY;
+        servaddr_.sin_addr.s_addr = inet_addr(addr_.c_str());
     }
 
     void Socket::connect_to_socket()
@@ -59,12 +58,6 @@ namespace seapath
         {
 
             std::cout << "[INFO] Waiting for data from server " << addr_ << " at port " << port_ << std::endl;
-
-            // set the socket timout to x sec and x µsec
-            //  struct timeval tv;
-            //  tv.tv_sec = 3;
-            //  tv.tv_usec = 0;
-            // setsockopt(client_socket_, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
 
             // Receive data from the server
             int bytes_read = recv(client_socket_, buffer_, sizeof(buffer_), 0);

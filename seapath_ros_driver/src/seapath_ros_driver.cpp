@@ -7,12 +7,11 @@ namespace seapath
     {
         odom_pub_ = this->create_publisher<nav_msgs::msg::Odometry>("/sensor/seapath/odom/ned", 10);
         origin_pub_ = this->create_publisher<geometry_msgs::msg::Point>("/sensor/seapath/origin", 10);
-        diagnosticStatus_pub_ = this->create_publisher<diagnostic_msgs::msg::DiagnosticStatus>("/sensor/seapath/diagnostic_msg", 10);
         diagnosticArray_pub_ = this->create_publisher<diagnostic_msgs::msg::DiagnosticArray>("/sensor/seapath/diagnostic_array", 10);
         nav_pub_ = this->create_publisher<sensor_msgs::msg::NavSatFix>("/sensor/seapath/NavSatFix", 10);
         kmbinary_pub_ = this->create_publisher<vortex_msgs::msg::KMBinary>("/sensor/seapath/vortex_msgs", 10);
         tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
-        declare_parameter<std::string>("UDP_IP", "0.0.0.0");
+        declare_parameter<std::string>("UDP_IP", "10.0.1.10");
         declare_parameter<u_int16_t>("UDP_PORT", 31421);
         UDP_IP_ = get_parameter("UDP_IP").as_string();
         UDP_PORT_ = get_parameter("UDP_PORT").as_int();
@@ -62,8 +61,6 @@ namespace seapath
         auto navSatFix = get_navsatfix_message(data);
         auto KMBinaryData = get_kmbinary_message(data);
         auto transform = get_transform_message(data);
-
-        diagnosticStatus_pub_->publish(current_diagnostic);
         diagnosticArray_pub_->publish(diagnostic_array);
 
         if (current_diagnostic.level == diagnostic_msgs::msg::DiagnosticStatus::OK)

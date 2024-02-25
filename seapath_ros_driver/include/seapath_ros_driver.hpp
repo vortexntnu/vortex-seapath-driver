@@ -9,19 +9,21 @@
 #include <memory>
 
 #include <rclcpp/rclcpp.hpp>
+#include "seapath_socket.hpp"
+
 #include <sensor_msgs/msg/nav_sat_fix.hpp>
 #include <geometry_msgs/msg/twist_with_covariance_stamped.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <nav_msgs/msg/odometry.hpp>
-#include <tf2/transform_datatypes.h>
-#include <tf2/LinearMath/Quaternion.h>
 #include <diagnostic_msgs/msg/diagnostic_status.hpp>
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
 #include <vortex_msgs/msg/km_binary.hpp>
+#include "geometry_msgs/msg/transform_stamped.hpp"
+
+#include <tf2/transform_datatypes.h>
+#include <tf2/LinearMath/Quaternion.h>
 #include "tf2/LinearMath/Quaternion.h"
 #include "tf2_ros/transform_broadcaster.h"
-#include "geometry_msgs/msg/transform_stamped.hpp"
-#include "seapath_socket.hpp"
 
 using std::placeholders::_1;
 using namespace std::chrono_literals;
@@ -78,7 +80,6 @@ namespace seapath
        * @brief Sets up the socket for communication.
        *
        * This function initializes the socket for UDP communication with the specified IP address and port number.
-       * The socket is currently set to use any IP address so UDP_IP is not currently used. Could be changed for later use.
        *
        * @param UDP_IP The IP address to bind the socket to.
        * @param UDP_PORT The port number to bind the socket to.
@@ -181,6 +182,15 @@ namespace seapath
        */
       void reset_origin(const KMBinaryData &data);
 
+      /**
+       * @brief Generates a TransformStamped message from the given KMBinaryData.
+       *
+       * This function takes a KMBinaryData object and converts it into a TransformStamped message
+       * from the geometry_msgs package. The generated message represents a transformation in 3D space.
+       *
+       * @param data The KMBinaryData object to convert.
+       * @return The generated TransformStamped message.
+       */
       geometry_msgs::msg::TransformStamped get_transform_message(const KMBinaryData &data);
       /**
        * @brief Timer callback function that retrieves KMBinaryData, then publishes it.
@@ -202,7 +212,6 @@ namespace seapath
    private:
       rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
       rclcpp::Publisher<geometry_msgs::msg::Point>::SharedPtr origin_pub_;
-      rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticStatus>::SharedPtr diagnosticStatus_pub_;
       rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr diagnosticArray_pub_;
       rclcpp::Publisher<sensor_msgs::msg::NavSatFix>::SharedPtr nav_pub_;
       rclcpp::Publisher<vortex_msgs::msg::KMBinary>::SharedPtr kmbinary_pub_;
