@@ -9,48 +9,100 @@
 #include <unistd.h>
 #include <vector>
 #include <sys/time.h>
+#include <chrono>
+#include <mutex>
 
-class SeaPathSocket {
-public:
+namespace seapath
+{
+    /**
+     * @brief Class representing a socket for communication with a remote server.
+     */
+    class Socket
+    {
+    public:
+        /**
+         * @brief Constructor for Socket class.
+         * @param UDP_IP The IP address of the remote server.
+         * @param UDP_PORT The port number of the remote server.
+         * @param shared_vector A reference to a vector for sharing data between threads.
+         * @param mutex A reference to a mutex for synchronizing access to the shared vector.
+         * @param packet_ready A reference to a boolean flag indicating if a packet is ready to be processed.
+         * @param socket_connected A reference to a boolean flag indicating if the socket is connected.
+         */
+        Socket(std::string UDP_IP, u_int16_t UDP_PORT, std::vector<uint8_t> &shared_vector, std::mutex &mutex, bool &packet_ready, bool &socket_connected);
 
-/**
- * @brief SeaPathSocket class constructor that establishes a UDP socket connection.
- *
- * @param UDP_IP The IP address for UDP socket communication.
- * @param UDP_PORT The port number for UDP socket communication.
- */
-    SeaPathSocket(const char* UDP_IP, const int UDP_PORT);
-    ~SeaPathSocket();
+        /**
+         * @brief Destructor for Socket class.
+         */
+        ~Socket();
 
-/**
- * @brief Receives data from the UDP socket and returns it as a vector of uint8_t.
- *
- * @return A vector of uint8_t containing the received data, or an empty vector if the socket is disconnected.
- */
-    std::vector<uint8_t> recieve_data();
+        /**
+         * @brief Closes the socket.
+         */
+        void close_socket();
 
-/**
- * @brief A boolean the tells if the socket is connected or not.
- * It is used in get_diagnostic_message() and parse_kmbinary_data(std::vector<uint8_t> data).
- * Not completely sure if it is needed in every check in the constructor for the seaPathSocket.
- */
-    bool socket_connected;
+        /**
+         * @brief Creates a socket.
+         */
+        void create_socket();
 
-private:
+        /**
+         * @brief Connects to the remote server.
+         */
+        void connect_to_socket();
 
-/**
-* @brief Socket file descriptor.
-*/
-    int sockfd;
+        /**
+         * @brief Receives data from the remote server.
+         */
+        void receive_data();
 
-/**
- * @brief Server and client address structures for socket communication.
- */
-    struct sockaddr_in servaddr, cliaddr;
+        /**
+         * @brief Socket file descriptor.
+         */
+        int client_socket_;
 
-/**
- * @brief Timeout value for socket reads.
- */
-    struct timeval read_timeout;
-};
-#endif //SEAPATH_SOCKET_H
+        /**
+         * @brief IP address of the remote server.
+         */
+        std::string addr_;
+
+        /**
+         * @brief Port number of the remote server.
+         */
+        uint16_t port_;
+
+        /**
+         * @brief Buffer for storing received data.
+         */
+        uint8_t buffer_[1024];
+
+        /**
+         * @brief A reference to the shared vector for data exchange between threads.
+         */
+        std::vector<uint8_t> &shared_vector_;
+
+        /**
+         * @brief A reference to the mutex for synchronizing access to the shared vector.
+         */
+        std::mutex &mutex_;
+
+        /**
+         * @brief A reference to the flag indicating if a packet is ready to be processed.
+         */
+        bool &packet_ready_;
+
+        /**
+         * @brief A reference to the flag indicating if the socket is connected.
+         */
+        bool &socket_connected_;
+
+        /**
+         * @brief Server address structure for socket communication.
+         */
+        sockaddr_in servaddr_;
+
+    private:
+        
+    };
+} // namespace seapath
+#endif // SEAPATH_SOCKET_H
