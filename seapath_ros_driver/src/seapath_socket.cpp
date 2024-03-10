@@ -23,7 +23,10 @@ namespace seapath
         // Set up server address information
         servaddr_.sin_family = AF_INET;
         servaddr_.sin_port = htons(port_);
-        servaddr_.sin_addr.s_addr = inet_addr(addr_.c_str());
+        // servaddr_.sin_addr.s_addr = inet_addr(addr_.c_str());
+        
+        // Socket failed to bind to the specified address, so it is set to INADDR_ANY
+        servaddr_.sin_addr.s_addr = INADDR_ANY;
     }
 
     void Socket::connect_to_socket()
