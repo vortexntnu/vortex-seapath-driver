@@ -16,7 +16,7 @@ namespace seapath
         origin_pub_ = this->create_publisher<geometry_msgs::msg::Point>("/sensor/seapath/origin", qos_transient_local);
         diagnosticArray_pub_ = this->create_publisher<diagnostic_msgs::msg::DiagnosticArray>("/sensor/seapath/diagnostic_array", qos_transient_local);
         nav_pub_ = this->create_publisher<sensor_msgs::msg::NavSatFix>("/sensor/seapath/NavSatFix", qos_sensor_data);
-        kmbinary_pub_ = this->create_publisher<vortex_msgs::msg::KMBinary>("/sensor/seapath/vortex_msgs", qos_sensor_data);
+        kmbinary_pub_ = this->create_publisher<vortex_msgs::msg::KMBinary>("/sensor/seapath/KMBinary", qos_sensor_data);
         tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 
         declare_parameter<std::string>("UDP_IP", "10.0.1.10");
@@ -171,8 +171,8 @@ namespace seapath
         rclcpp::Time current_time;
         odom_msg.header.stamp = current_time = this->now();
 
-        odom_msg.header.frame_id = "seapath_frame_pose";
-        odom_msg.child_frame_id = "seapath_frame_twist";
+        odom_msg.header.frame_id = "world_frame";
+        odom_msg.child_frame_id = "seapath_frame";
         float north = data.latitude;
         float east = data.longitude;
         float height = data.ellipsoid_height;
@@ -356,7 +356,7 @@ namespace seapath
         rclcpp::Time current_time;
         transform_msg.header.stamp = current_time = this->now();
         transform_msg.header.frame_id = "world_frame";
-        transform_msg.child_frame_id = "seapath_frame_pose";
+        transform_msg.child_frame_id = "seapath_frame";
 
         float north = data.latitude;
         float east = data.longitude;
