@@ -172,7 +172,7 @@ namespace seapath
         odom_msg.header.stamp = current_time = this->now();
 
         odom_msg.header.frame_id = "world_frame";
-        odom_msg.child_frame_id = "world_frame";
+        odom_msg.child_frame_id = "seapath_frame";
         float north = data.latitude;
         float east = data.longitude;
         float height = data.ellipsoid_height;
@@ -355,8 +355,8 @@ namespace seapath
         geometry_msgs::msg::TransformStamped transform_msg;
         rclcpp::Time current_time;
         transform_msg.header.stamp = current_time = this->now();
-        transform_msg.header.frame_id = "seapath_frame";
-        transform_msg.child_frame_id = "world_frame";
+        transform_msg.header.frame_id = "world_frame";
+        transform_msg.child_frame_id = "seapath_frame";
 
         float north = data.latitude;
         float east = data.longitude;
