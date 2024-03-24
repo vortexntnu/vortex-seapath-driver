@@ -21,8 +21,13 @@ namespace seapath
 
         declare_parameter<std::string>("UDP_IP", "10.0.1.10");
         declare_parameter<u_int16_t>("UDP_PORT", 31421);
+        declare_parameter<double>("orientation_error_diagnostic", 1.0);
+        declare_parameter<double>("position_error_diagnostic", 1.0);
+
         UDP_IP_ = get_parameter("UDP_IP").as_string();
         UDP_PORT_ = get_parameter("UDP_PORT").as_int();
+        orientation_error_diagnostic_ = get_parameter("orientation_error_diagnostic").as_double();
+        position_error_diagnostic_ = get_parameter("position_error_diagnostic").as_double();
         shared_vector_ = std::vector<uint8_t>();
         packet_ready_ = false;
         socket_connected_ = false;
@@ -65,14 +70,16 @@ namespace seapath
     {
 
         auto odom = get_odometry_message(data);
-        auto current_diagnostic = get_diagnostic_message();
-        auto diagnostic_array = get_diagnostic_array(current_diagnostic);
+        auto diagnostic_array = get_diagnostic_array(data);
         auto navSatFix = get_navsatfix_message(data);
         auto KMBinaryData = get_kmbinary_message(data);
         auto transform = get_transform_message(data);
+
         diagnosticArray_pub_->publish(diagnostic_array);
 
-        if (current_diagnostic.level == diagnostic_msgs::msg::DiagnosticStatus::OK)
+        // Only publish if socket is connected
+        // Could be changed to check pose and orientation error
+        if (socket_connected_) 
         {
             odom_pub_->publish(odom);
             tf_broadcaster_->sendTransform(transform);
@@ -139,28 +146,62 @@ namespace seapath
         return result;
     }
 
-    diagnostic_msgs::msg::DiagnosticStatus Driver::get_diagnostic_message()
-    {
-        // check if it's properly connected to the socket
-        diagnostic_msgs::msg::DiagnosticStatus diagnostic_msg;
-        if (socket_connected_ == false)
-        {
-            diagnostic_msg.level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
-            diagnostic_msg.name = "Diagnostic_connection_to_socket_status";
-            diagnostic_msg.message = "Socket disconnected";
-        }
-        else if (socket_connected_ == true)
-        {
-            diagnostic_msg.level = diagnostic_msgs::msg::DiagnosticStatus::OK;
-            diagnostic_msg.name = "Diagnostic_connection_to_socket_status";
-            diagnostic_msg.message = "Socket connection is OK";
-        }
-        return diagnostic_msg;
-    }
-
-    diagnostic_msgs::msg::DiagnosticArray Driver::get_diagnostic_array(diagnostic_msgs::msg::DiagnosticStatus diagnostic_msg)
+    diagnostic_msgs::msg::DiagnosticArray Driver::get_diagnostic_array(const KMBinaryData &data)
     {
         diagnostic_msgs::msg::DiagnosticArray diagnostic_array;
+        diagnostic_msgs::msg::DiagnosticStatus diagnostic_msg;
+        diagnostic_msg.name = "Diagnostic_seapath_status";
+        diagnostic_array.header.stamp = this->now();
+
+        bool position_error = data.latitude_error > position_error_diagnostic_ || data.longitude_error > position_error_diagnostic_ || data.height_error > position_error_diagnostic_;
+        bool orientation_error = data.heading_error > orientation_error_diagnostic_ || data.roll_error > orientation_error_diagnostic_ || data.pitch_error > orientation_error_diagnostic_;
+
+        if (socket_connected_ == false)
+        {
+            diagnostic_msg.level = diagnostic_msgs::msg::DiagnosticStatus::ERROR;
+            diagnostic_msg.message = "Socket disconnected";
+            diagnostic_array.status.push_back(diagnostic_msg);
+            return diagnostic_array;
+        }
+
+        diagnostic_msgs::msg::KeyValue kv1, kv2, kv3, kv4, kv5, kv6;
+
+        kv1.key = "Latitude Error";
+        kv1.value = std::to_string(data.latitude_error);
+
+        kv2.key = "Longitude Error";
+        kv2.value = std::to_string(data.longitude_error);
+
+        kv3.key = "Height Error";
+        kv3.value = std::to_string(data.height_error);
+
+        kv4.key = "Roll Error";
+        kv4.value = std::to_string(data.roll_error);
+
+        kv5.key = "Pitch Error";
+        kv5.value = std::to_string(data.pitch_error);
+
+        kv6.key = "Heading Error";
+        kv6.value = std::to_string(data.heading_error);
+
+        diagnostic_msg.values = {kv1, kv2, kv3, kv4, kv5, kv6};
+
+        if (position_error)
+        {
+            diagnostic_msg.level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
+            diagnostic_msg.message = "Position error";
+        }
+        else if (orientation_error)
+        {
+            diagnostic_msg.level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
+            diagnostic_msg.message = "Orientation error";
+        }
+        else
+        {
+            diagnostic_msg.level = diagnostic_msgs::msg::DiagnosticStatus::OK;
+            diagnostic_msg.message = "Socket connection is OK";
+        }
+    
         diagnostic_array.status.push_back(diagnostic_msg);
         return diagnostic_array;
     }
@@ -355,8 +396,8 @@ namespace seapath
         geometry_msgs::msg::TransformStamped transform_msg;
         rclcpp::Time current_time;
         transform_msg.header.stamp = current_time = this->now();
-        transform_msg.header.frame_id = "world_frame";
-        transform_msg.child_frame_id = "seapath_frame_pose";
+        transform_msg.header.frame_id = "seapath_frame";
+        transform_msg.child_frame_id = "world_frame";
 
         float north = data.latitude;
         float east = data.longitude;

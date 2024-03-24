@@ -1,0 +1,7 @@
+seapath_ros_driver_node:
+  ros__parameters:
+    UDP_IP: "10.0.1.10"  # IP of the socket. The socket is currently set to ignore this param and use IP_ADDR_ANY instead. 
+    #The socket failed to bind when ip was specified.
+    UDP_PORT: 31421
+    orientation_error_diagnostic: 1.0
+    position_error_diagnostic: 1.0
