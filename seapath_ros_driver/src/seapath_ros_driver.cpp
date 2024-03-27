@@ -209,8 +209,7 @@ namespace seapath
     nav_msgs::msg::Odometry Driver::get_odometry_message(const KMBinaryData &data)
     {
         nav_msgs::msg::Odometry odom_msg;
-        rclcpp::Time current_time;
-        odom_msg.header.stamp = current_time = this->now();
+        odom_msg.header.stamp = this->get_clock()->now();
 
         odom_msg.header.frame_id = "world_frame";
         odom_msg.child_frame_id = "seapath_frame";
@@ -290,13 +289,13 @@ namespace seapath
     sensor_msgs::msg::NavSatFix Driver::get_navsatfix_message(const KMBinaryData &data)
     {
         sensor_msgs::msg::NavSatFix nav_msg;
-        rclcpp::Time current_time;
         geometry_msgs::msg::PoseWithCovarianceStamped pose_cov;
-        pose_cov.header.stamp = current_time = this->now();
+        rclcpp::Time current_time = this->get_clock()->now();
+        pose_cov.header.stamp = current_time;
         pose_cov.header.frame_id = "world_frame";
         pose_cov.pose = get_odometry_message(data).pose;
 
-        nav_msg.header.stamp = current_time = this->now();
+        nav_msg.header.stamp = current_time;
         nav_msg.header.frame_id = "world_frame";
 
         nav_msg.latitude = data.latitude;
@@ -394,8 +393,7 @@ namespace seapath
     geometry_msgs::msg::TransformStamped Driver::get_transform_message(const KMBinaryData &data)
     {
         geometry_msgs::msg::TransformStamped transform_msg;
-        rclcpp::Time current_time;
-        transform_msg.header.stamp = current_time = this->now();
+        transform_msg.header.stamp = this->get_clock()->now();
         transform_msg.header.frame_id = "seapath_frame";
         transform_msg.child_frame_id = "world_frame";
 
