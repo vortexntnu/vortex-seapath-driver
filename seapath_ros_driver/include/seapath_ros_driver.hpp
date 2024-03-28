@@ -114,19 +114,12 @@ namespace seapath
       KMBinaryData parse_kmbinary_data(std::vector<uint8_t> data);
 
       /**
-       * @brief Get the diagnostic message object. Uses the socket.connected boolean to make sure which meesage it should send.
-       *
-       * @return diagnostic_msgs::msg::DiagnosticStatus - the message
-       */
-      diagnostic_msgs::msg::DiagnosticStatus get_diagnostic_message();
-
-      /**
        * @brief Get the diagnostic array object message.
        *
        * @param diagnostic_msg The diagnostic message used for creating the diagnostic array.
        * @return diagnostic_msgs::msg::DiagnosticArray - the diagnostic array. Used for visualizing diagnostic status in programs like foxglove studio.
        */
-      diagnostic_msgs::msg::DiagnosticArray get_diagnostic_array(diagnostic_msgs::msg::DiagnosticStatus diagnostic_msg);
+      diagnostic_msgs::msg::DiagnosticArray get_diagnostic_array(const KMBinaryData &data);
 
       /**
        * @brief Get the odometry message object
@@ -204,6 +197,9 @@ namespace seapath
       bool socket_connected_;
       std::string UDP_IP_;
       uint16_t UDP_PORT_;
+
+      double orientation_error_diagnostic_;
+      double position_error_diagnostic_;
 
       double ORIGIN_N = -100;
       double ORIGIN_E = -100;
