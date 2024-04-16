@@ -67,25 +67,18 @@ namespace seapath
         while (true)
         {
             // Receive data from the server
-            int bytes_read = recv(client_socket_, buffer_, sizeof(buffer_), 0);
+            int bytes_read = recv(client_socket_, buffer_.data(), KMB_SIZE, 0);
 
-            if (bytes_read != 132) // If the packet is not 132 bytes, the socket is re-bound
+            if (uint8_t(bytes_read) != KMB_SIZE) // If the packet is not 132 bytes, the socket is re-bound
             {
                 socket_connected_ = false;
                 bind_socket();
                 continue;
             }
+            std::unique_lock<std::mutex> lock(mutex_);
             socket_connected_ = true;
-            std::vector<uint8_t> packet_data;
-
-            for (int i = 0; i < bytes_read; i++)
-            { // All data is stored in the vector
-                packet_data.push_back(buffer_[i]);
-            }
-
-            parse_kmbinary_data(packet_data);
-            packet_data.clear();
-
+            data_ready_ = true;
+            lock.unlock();
         }
     }
 
@@ -105,10 +98,10 @@ namespace seapath
     {
         std::unique_lock<std::mutex> lock(mutex_);
         data_ready_ = false;
-        return KMBinary_; // lock goes out of scope and is released automatically
+        return parse_kmbinary_data(buffer_); // lock goes out of scope and is released automatically
     }
 
-    void Socket::parse_kmbinary_data(std::vector<uint8_t> data)
+    KMBinaryData Socket::parse_kmbinary_data(std::array<uint8_t,KMB_SIZE> data)
     {
 
         KMBinaryData result;
@@ -159,9 +152,7 @@ namespace seapath
         copyData(&result.delayed_heave, 4);
         
         std::unique_lock<std::mutex> lock(mutex_);
-        KMBinary_= result;
-        data_ready_ = true;
-        lock.unlock();
+        return result;
     }
 
     void Socket::close_socket()

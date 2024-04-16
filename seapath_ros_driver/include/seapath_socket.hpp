@@ -7,10 +7,10 @@
 #include <string>
 #include <cstring>
 #include <unistd.h>
-#include <vector>
 #include <sys/time.h>
 #include <chrono>
 #include <mutex>
+#include <array>
 
 
 namespace seapath
@@ -57,6 +57,7 @@ namespace seapath
     bool isInvalidDataHeaveVertVel() const { return status & (1 << 3); }
     bool isInvalidDataAcceleration() const { return status & (1 << 4); }
     bool isInvalidDataDelayedHeave() const { return status & (1 << 5); }
+    bool isAnyInvalidData() const { return status & 0x3F; }
 
     bool isReducedPerformanceHorizontalPosVel() const { return status & (1 << 16); }
     bool isReducedPerformanceRollPitch() const { return status & (1 << 17); }
@@ -64,7 +65,74 @@ namespace seapath
     bool isReducedPerformanceHeaveVertVel() const { return status & (1 << 19); }
     bool isReducedPerformanceAcceleration() const { return status & (1 << 20); }
     bool isReducedPerformanceDelayedHeave() const { return status & (1 << 21); }
+    bool isAnyReducedPerformance() const { return status & 0x3F0000; }
+
+    enum class DiagnosticStatus {
+        OK,    // No invalid or reduced performance flags are set
+        REDUCED,  // Reduced performance flags are set, but no invalid flags are set
+        INVALID  // Invalid flags are set
     };
+    struct StatusFlags {
+        DiagnosticStatus horizontal_pos_vel;
+        DiagnosticStatus roll_pitch;
+        DiagnosticStatus heading;
+        DiagnosticStatus heave_vert_vel;
+        DiagnosticStatus acceleration;
+        DiagnosticStatus delayed_heave;
+    };
+
+    StatusFlags evaluateDiagnosticStatus() const {
+        StatusFlags flags;
+
+        flags.horizontal_pos_vel = determineStatus(isInvalidDataHorizontalPosVel(), isReducedPerformanceHorizontalPosVel());
+        flags.roll_pitch = determineStatus(isInvalidDataRollPitch(), isReducedPerformanceRollPitch());
+        flags.heading = determineStatus(isInvalidDataHeading(), isReducedPerformanceHeading());
+        flags.heave_vert_vel = determineStatus(isInvalidDataHeaveVertVel(), isReducedPerformanceHeaveVertVel());
+        flags.acceleration = determineStatus(isInvalidDataAcceleration(), isReducedPerformanceAcceleration());
+        flags.delayed_heave = determineStatus(isInvalidDataDelayedHeave(), isReducedPerformanceDelayedHeave());
+
+        return flags;
+    }
+
+    static DiagnosticStatus determineStatus(bool isInvalid, bool isReduced) {
+        if (isInvalid) {
+            return DiagnosticStatus::INVALID;
+        } else if (isReduced) {
+            return DiagnosticStatus::REDUCED;
+        } else {
+            return DiagnosticStatus::OK;
+        }
+    }
+
+    DiagnosticStatus determineOverallStatus() const {
+        if (isAnyInvalidData()) {
+            return DiagnosticStatus::INVALID;
+        } else if (isAnyReducedPerformance()) {
+            return DiagnosticStatus::REDUCED;
+        } else {
+            return DiagnosticStatus::OK;
+        }
+    }
+
+    static std::string status_to_string(KMBinaryData::DiagnosticStatus status) {
+        switch (status)
+        {
+        case KMBinaryData::DiagnosticStatus::INVALID:
+            return "INVALID";
+        case KMBinaryData::DiagnosticStatus::REDUCED:
+            return "REDUCED";
+        case KMBinaryData::DiagnosticStatus::OK:
+            return "OK";
+        }
+        return "UNKNOWN";
+    }
+
+    bool status_ok() const {
+        return determineOverallStatus() == DiagnosticStatus::OK;
+    }
+
+    };
+
     /**
      * @brief Class representing a socket for communication with a remote server.
      */
@@ -111,7 +179,9 @@ namespace seapath
          */
         void receive_data();
 
-        void parse_kmbinary_data(std::vector<uint8_t> data);
+        static constexpr size_t KMB_SIZE = 132;
+
+        KMBinaryData parse_kmbinary_data(std::array<uint8_t,KMB_SIZE> data);
 
         KMBinaryData get_kmbinary_data();
 
@@ -141,7 +211,7 @@ namespace seapath
         /**
          * @brief Buffer for storing received data.
          */
-        uint8_t buffer_[132];
+        std::array<uint8_t, KMB_SIZE> buffer_;
 
         /**
          * @brief A reference to the mutex for synchronizing access to the shared vector.

@@ -74,28 +74,21 @@ namespace seapath
        * @brief Publishes static transform from world NED to world SEU to use for foxglove visualization.
        *
        */
-      void publish_static_tf();
-
-
-      /**
-       * @brief Publish method that calls various publishers.
-       *
-       */
-      void driver_publisher() const;
+      void publish_static_tf(const rclcpp::Time& time) const;
 
       /**
        * @brief Get the diagnostic array object message.
        *
        * @return diagnostic_msgs::msg::DiagnosticArray - the diagnostic array. Used for visualizing diagnostic status in programs like foxglove studio.
        */
-      diagnostic_msgs::msg::DiagnosticArray get_diagnostic_array() const;
+      diagnostic_msgs::msg::DiagnosticArray get_diagnostic_array(const KMBinaryData& data, const rclcpp::Time& time) const;
 
       /**
        * @brief Get the odometry message object
        *
        * @return nav_msgs::msg::Odometry - the message
        */
-      nav_msgs::msg::Odometry get_odometry_message() const;
+      nav_msgs::msg::Odometry get_odometry_message(const KMBinaryData& data, const rclcpp::Time& time) const;
 
       /**
        * @brief Get the navsatfix message object. Contains the position (longitude, latitude and height), and the covariance of the position. 
@@ -103,20 +96,20 @@ namespace seapath
        * @param data The KMBinary object.
        * @return sensor_msgs::msg::NavSatFix - the message
        */
-      sensor_msgs::msg::NavSatFix get_navsatfix_message() const;
+      sensor_msgs::msg::NavSatFix get_navsatfix_message(const KMBinaryData& data, const rclcpp::Time& time) const;
 
       /**
        * @brief Used for creating a ROS message defined in vortex-msgs containing all the KMBinary data.
        *
        * @return vortex_msgs::msg::KMBinary - the message
        */
-      vortex_msgs::msg::KMBinary get_kmbinary_message() const;
+      vortex_msgs::msg::KMBinary get_kmbinary_message(const KMBinaryData& data) const;
    
       /**
        * @brief sets the global origin to the specified coordinates and height in data_.
        *
        */
-      void set_origin();
+      void set_origin(const KMBinaryData& data);
 
 
       /**
@@ -143,7 +136,7 @@ namespace seapath
        * @param degrees The angle in degrees.
        * @return double - the angle in radians.
        */
-      double deg2rad(const double& degrees) const;
+      constexpr double deg2rad(double degrees) const;
 
       /**
        * @brief estimates the flat earth coordinates from the latitude, longitude and altitude of data_ from reference point set by origin.
@@ -153,14 +146,14 @@ namespace seapath
        * @param alt The altitude.
        * @return std::array<double, 3> - the flat earth coordinates.
        */
-      std::array<double, 3> lla2flat(const double& lat, const double& lon, const double& alt) const;
+      std::array<double, 3> lla2flat(double lat, double lon, double alt) const;
 
       
       /**
        * @brief Publishes the dynamic transforms based on data_. 
        *
        */
-      void publish_dyn_tf() const;
+      void publish_dyn_tf(const KMBinaryData& data, const rclcpp::Time& time) const;
 
     
 
@@ -174,14 +167,11 @@ namespace seapath
       std::shared_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
       std::shared_ptr<tf2_ros::StaticTransformBroadcaster> static_tf_broadcaster_;
       std::shared_ptr<rclcpp::Service<std_srvs::srv::Trigger>> reset_origin_service_;
-      Socket socket_;
-
       rclcpp::TimerBase::SharedPtr timer_;
-      rclcpp::Time time_;
-
-      KMBinaryData data_;
+      Socket socket_;
       std::string UDP_IP_;
       uint16_t UDP_PORT_;
+
 
       bool origin_set_ = false;
       double origin_lat_ = -100;
