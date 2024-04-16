@@ -284,7 +284,7 @@ namespace seapath
         sensor_msgs::msg::NavSatFix nav_msg;
       
         nav_msg.header.stamp = time_;
-        nav_msg.header.frame_id = "seapath"; // ??
+        nav_msg.header.frame_id = "lla";
 
         nav_msg.latitude = data_.latitude;
         nav_msg.longitude = data_.longitude;
