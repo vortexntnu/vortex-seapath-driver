@@ -151,7 +151,6 @@ namespace seapath
         copyData(&result.delayed_heave_utc_nanoseconds, 4);
         copyData(&result.delayed_heave, 4);
         
-        std::unique_lock<std::mutex> lock(mutex_);
         return result;
     }
 

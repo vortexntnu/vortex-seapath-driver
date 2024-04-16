@@ -31,7 +31,7 @@ namespace seapath
         UDP_PORT_ = get_parameter("UDP_PORT").as_int();
     
         std::thread(&Driver::setup_socket, this).detach();
-        std::thread(&Driver::initial_setup, this).detach();
+        initial_setup();
 
     }
 
@@ -47,15 +47,10 @@ namespace seapath
     void Driver::reset_origin()
     {
          // Block until a valid data message is received
-        RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "Waiting for valid data to set origin\n");
         while (!origin_set_) {
             if (socket_.get_data_status()) {
                 auto data = socket_.get_kmbinary_data();
                 auto time = this->get_clock()->now();
-                if(data.status_ok()){ // Don't set origin if data not accurate
-                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-                    continue;
-                }
                 set_origin(data);
                 origin_pub_->publish(get_navsatfix_message(data, time));
                 publish_static_tf(time);
@@ -413,7 +408,7 @@ namespace seapath
         // Transformation from North-East to flat x-y coordinates
         const double px = cos(psi_rad) * dN - sin(psi_rad) * dE;
         const double py = sin(psi_rad) * dN + cos(psi_rad) * dE;
-        const double pz = -alt - origin_h_; // Flat Earth z-axis value (downwards positive, NED)
+        const double pz = origin_h_ - alt; // Flat Earth z-axis value (downwards positive, NED)
 
         return {px, py, pz};
     }
@@ -425,13 +420,13 @@ namespace seapath
         tf2::Transform transform;
         transform.setOrigin(tf2::Vector3(x, y, z));
 
-        transform.setRotation(tf2::Quaternion(1, 0, 0, 0));
+        transform.setRotation(tf2::Quaternion(0, 0, 0, 1));
 
         geometry_msgs::msg::TransformStamped transform_msg;
         transform_msg.transform = tf2::toMsg(transform);
         transform_msg.header.stamp = time;
         transform_msg.header.frame_id = "world";
-        transform_msg.child_frame_id = "vechicle";
+        transform_msg.child_frame_id = "vehicle";
         tf_broadcaster_->sendTransform(transform_msg);
 
         tf2::Quaternion q;
