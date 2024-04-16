@@ -4,9 +4,18 @@
 namespace seapath
 {
 
-    Socket::Socket(std::string UDP_IP, u_int16_t UDP_PORT, std::vector<uint8_t> &shared_vector, std::mutex &mutex, bool &packet_ready, bool &socket_connected)
-        : addr_(UDP_IP), port_(UDP_PORT), shared_vector_(shared_vector), mutex_(mutex), packet_ready_(packet_ready), socket_connected_(socket_connected)
+    Socket::Socket(std::string UDP_IP, u_int16_t UDP_PORT)
+        : addr_(UDP_IP), port_(UDP_PORT), data_ready_(false)   {
+    }
+
+    void Socket::set_port(u_int16_t port)
     {
+        port_ = port;
+    }
+
+    void Socket::set_ip(std::string ip)
+    {
+        addr_ = ip;
     }
 
     // Socket currently set up using INADDR_ANY, which means it will listen to all incoming traffic on the specified port.
@@ -29,9 +38,8 @@ namespace seapath
         servaddr_.sin_addr.s_addr = INADDR_ANY;
     }
 
-    void Socket::connect_to_socket()
+    void Socket::bind_socket()
     {
-        socket_connected_ = false;
         while (true)
         {
             std::cout << "[INFO] Client socket " << client_socket_ << std::endl;
@@ -56,43 +64,104 @@ namespace seapath
 
     void Socket::receive_data()
     {
-        std::vector<uint8_t> packet_data;
         while (true)
         {
-
-            std::cout << "[INFO] Waiting for data from server " << addr_ << " at port " << port_ << std::endl;
-
             // Receive data from the server
             int bytes_read = recv(client_socket_, buffer_, sizeof(buffer_), 0);
 
-            std::cout << "Received " << bytes_read << " bytes!" << std::endl;
-
-            if (bytes_read < 0)
+            if (bytes_read != 132) // If the packet is not 132 bytes, the socket is re-bound
             {
                 socket_connected_ = false;
+                bind_socket();
                 continue;
             }
-            else
-            {
-                socket_connected_ = true;
-                buffer_[bytes_read] = '\0'; // Make sure the buffer is getting ended (should not be necessary)
-            }
+            socket_connected_ = true;
+            std::vector<uint8_t> packet_data;
 
             for (int i = 0; i < bytes_read; i++)
             { // All data is stored in the vector
                 packet_data.push_back(buffer_[i]);
             }
 
-            if (!packet_ready_)
-            {
-                std::unique_lock<std::mutex> lock(mutex_); // Locks the shared vector (extra protection for thread-safe handling)
-                shared_vector_ = packet_data;
-                packet_ready_ = true;
-                lock.unlock();
-            }
+            parse_kmbinary_data(packet_data);
+            packet_data.clear();
 
-            packet_data.clear(); // Resets the vector for a new packet-collection
         }
+    }
+
+    bool Socket::socket_connected() const
+    {   
+        std::unique_lock<std::mutex> lock(mutex_);
+        return socket_connected_;
+    }
+
+    bool Socket::get_data_status() const
+    {
+        std::unique_lock<std::mutex> lock(mutex_);
+        return data_ready_;
+    }
+
+    KMBinaryData Socket::get_kmbinary_data()
+    {
+        std::unique_lock<std::mutex> lock(mutex_);
+        data_ready_ = false;
+        return KMBinary_; // lock goes out of scope and is released automatically
+    }
+
+    void Socket::parse_kmbinary_data(std::vector<uint8_t> data)
+    {
+
+        KMBinaryData result;
+        size_t offset = 0;
+
+        /**
+         * @brief Helper lambda to copy data and update the offset
+         *
+         */
+        auto copyData = [&data, &offset](void *dest, size_t size)
+        {
+            std::memcpy(dest, data.data() + offset, size);
+            offset += size;
+        };
+        
+        
+        copyData(result.start_id, 4);
+        copyData(&result.dgm_length, 2);
+        copyData(&result.dgm_version, 2);
+        copyData(&result.utc_seconds, 4);
+        copyData(&result.utc_nanoseconds, 4);
+        copyData(&result.status, 4);
+        copyData(&result.latitude, 8);
+        copyData(&result.longitude, 8);
+        copyData(&result.ellipsoid_height, 4);
+        copyData(&result.roll, 4);
+        copyData(&result.pitch, 4);
+        copyData(&result.heading, 4);
+        copyData(&result.heave, 4);
+        copyData(&result.roll_rate, 4);
+        copyData(&result.pitch_rate, 4);
+        copyData(&result.yaw_rate, 4);
+        copyData(&result.north_velocity, 4);
+        copyData(&result.east_velocity, 4);
+        copyData(&result.down_velocity, 4);
+        copyData(&result.latitude_error, 4);
+        copyData(&result.longitude_error, 4);
+        copyData(&result.height_error, 4);
+        copyData(&result.roll_error, 4);
+        copyData(&result.pitch_error, 4);
+        copyData(&result.heading_error, 4);
+        copyData(&result.heave_error, 4);
+        copyData(&result.north_acceleration, 4);
+        copyData(&result.east_acceleration, 4);
+        copyData(&result.down_acceleration, 4);
+        copyData(&result.delayed_heave_utc_seconds, 4);
+        copyData(&result.delayed_heave_utc_nanoseconds, 4);
+        copyData(&result.delayed_heave, 4);
+        
+        std::unique_lock<std::mutex> lock(mutex_);
+        KMBinary_= result;
+        data_ready_ = true;
+        lock.unlock();
     }
 
     void Socket::close_socket()
