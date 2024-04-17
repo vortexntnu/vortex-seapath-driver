@@ -18,6 +18,8 @@ find_package(tf2              REQUIRED)
 find_package(tf2_ros          REQUIRED)
 find_package(diagnostic_msgs  REQUIRED)
 find_package(vortex_msgs      REQUIRED)
+find_package(std_srvs         REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
 include_directories(include)
 
 add_executable(${PROJECT_NAME}_node
@@ -36,6 +38,8 @@ ament_target_dependencies(${PROJECT_NAME}_node
   tf2_ros
   diagnostic_msgs
   vortex_msgs
+  std_srvs
+  tf2_geometry_msgs
 )
 
 install(
