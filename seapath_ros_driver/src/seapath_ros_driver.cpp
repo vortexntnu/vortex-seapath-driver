@@ -53,7 +53,7 @@ namespace seapath
                 auto time = this->get_clock()->now();
                 set_origin(data);
                 origin_pub_->publish(get_navsatfix_message(data, time));
-                publish_static_tf(time);
+                publish_foxglove_vis_frame(time);
                 kmbinary_pub_->publish(get_kmbinary_message(data));
                 diagnostic_pub_->publish(get_diagnostic_array(data, time));
                 nav_pub_->publish(get_navsatfix_message(data, time));
@@ -76,6 +76,7 @@ namespace seapath
 
     void Driver::timer_callback()
     {
+        std::unique_lock<std::mutex> lock(mutex_);
        if(socket_.get_data_status()){
            auto data = socket_.get_kmbinary_data();
            auto time = this->get_clock()->now();
@@ -88,8 +89,6 @@ namespace seapath
             nav_pub_->publish(get_navsatfix_message(data, time));
             odom_pub_->publish(get_odometry_message(data, time));
             publish_dyn_tf(data, time); 
-
-        
         }
     }
 
@@ -105,12 +104,12 @@ namespace seapath
         if(timer_){
         timer_.reset();
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(200)); // Wait for timer to finish callback
+        std::unique_lock<std::mutex> lock(mutex_);
         // Reset the origin coordinates
         origin_set_ = false;
 
         reset_origin();
-        
+        lock.unlock();
         // Respond to the request
         response->success = true;
         response->message = "Origin reset successfully";
@@ -122,7 +121,7 @@ namespace seapath
         return;
     }
 
-    void Driver::publish_static_tf(const rclcpp::Time& time) const
+    void Driver::publish_foxglove_vis_frame(const rclcpp::Time& time) const
         {
         // Setup the transform
         geometry_msgs::msg::TransformStamped transformStamped;
@@ -243,8 +242,8 @@ namespace seapath
         nav_msgs::msg::Odometry odom_msg;
         odom_msg.header.stamp = time;
 
-        odom_msg.header.frame_id = "seapath";
-        odom_msg.child_frame_id = "seapath";
+        odom_msg.header.frame_id = "world"; // This is the reference coordinate frame with respect to which the pose and velocity are being represented.
+        odom_msg.child_frame_id = "seapath"; // This represents the coordinate frame of the vehicle
        
         auto [x, y, z] = lla2flat(data.latitude, data.longitude, data.ellipsoid_height);
 

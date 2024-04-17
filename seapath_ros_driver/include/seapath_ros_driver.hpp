@@ -8,6 +8,7 @@
 #include <chrono>
 #include <memory>
 
+
 #include <rclcpp/rclcpp.hpp>
 #include "seapath_socket.hpp"
 #include <std_srvs/srv/trigger.hpp>
@@ -74,7 +75,7 @@ namespace seapath
        * @brief Publishes static transform from world NED to world SEU to use for foxglove visualization.
        *
        */
-      void publish_static_tf(const rclcpp::Time& time) const;
+      void publish_foxglove_vis_frame(const rclcpp::Time& time) const;
 
       /**
        * @brief Get the diagnostic array object message.
@@ -171,6 +172,7 @@ namespace seapath
       Socket socket_;
       std::string UDP_IP_;
       uint16_t UDP_PORT_;
+      std::mutex mutex_;
 
 
       bool origin_set_ = false;
