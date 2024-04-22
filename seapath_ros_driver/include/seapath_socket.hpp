@@ -127,8 +127,8 @@ namespace seapath
         return "UNKNOWN";
     }
 
-    bool status_ok() const {
-        return determineOverallStatus() == DiagnosticStatus::OK;
+    bool status_not_invalid() const {
+        return determineOverallStatus() != DiagnosticStatus::INVALID;
     }
 
     };

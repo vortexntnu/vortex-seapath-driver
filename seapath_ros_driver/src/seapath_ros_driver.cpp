@@ -83,7 +83,7 @@ namespace seapath
 
             kmbinary_pub_->publish(get_kmbinary_message(data));
             diagnostic_pub_->publish(get_diagnostic_array(data, time));
-            if(!data.status_ok()){
+            if(!data.status_not_invalid()){
                 return;
             }
             nav_pub_->publish(get_navsatfix_message(data, time));
