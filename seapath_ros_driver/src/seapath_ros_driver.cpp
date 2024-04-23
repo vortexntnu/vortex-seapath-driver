@@ -12,9 +12,11 @@ namespace seapath
         qos_profile_transient_local.durability = RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL;
         auto qos_transient_local = rclcpp::QoS(rclcpp::QoSInitialization(qos_profile_transient_local.history, 1), qos_profile_transient_local);
 
-        odom_pub_ = this->create_publisher<nav_msgs::msg::Odometry>("/seapath/odom/ned", qos_sensor_data);
         diagnostic_pub_ = this->create_publisher<diagnostic_msgs::msg::DiagnosticArray>("/diagnostics", qos_transient_local);
-        origin_pub_ = this->create_publisher<sensor_msgs::msg::NavSatFix>("/origin/navsatfix", qos_transient_local);
+        map_origin_pub_ = this->create_publisher<sensor_msgs::msg::NavSatFix>("/map/origin", qos_transient_local);
+        odom_origin_pub_ = this->create_publisher<sensor_msgs::msg::NavSatFix>("/odom/origin", qos_transient_local);
+
+        odom_pub_ = this->create_publisher<nav_msgs::msg::Odometry>("/seapath/odom/ned", qos_sensor_data);
         nav_pub_ = this->create_publisher<sensor_msgs::msg::NavSatFix>("/seapath/navsatfix", qos_sensor_data);
         kmbinary_pub_ = this->create_publisher<vortex_msgs::msg::KMBinary>("/seapath/KMBinary", qos_sensor_data);
         tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
@@ -24,14 +26,18 @@ namespace seapath
         reset_origin_service_ = this->create_service<std_srvs::srv::Trigger>(
             "reset_origin", std::bind(&Driver::reset_origin_callback, this, std::placeholders::_1, std::placeholders::_2));
 
+        declare_parameter<bool>("use_predef_map_origin", false);
+        declare_parameter<double>("map_origin_lat", 0.0);
+        declare_parameter<double>("map_origin_lon", 0.0);
+
         declare_parameter<std::string>("UDP_IP", "10.0.1.10");
         declare_parameter<u_int16_t>("UDP_PORT", 31421);
-    
+
         UDP_IP_ = get_parameter("UDP_IP").as_string();
         UDP_PORT_ = get_parameter("UDP_PORT").as_int();
     
         std::thread(&Driver::setup_socket, this).detach();
-        initial_setup();
+        reset_origin();
 
     }
 
@@ -52,26 +58,31 @@ namespace seapath
                 auto data = socket_.get_kmbinary_data();
                 auto time = this->get_clock()->now();
                 set_origin(data);
-                origin_pub_->publish(get_navsatfix_message(data, time));
+                if(get_parameter("use_predef_map_origin").as_bool()){
+                    auto map_origin = get_navsatfix_message(data, time);
+                    double map_origin_lat = get_parameter("map_origin_lat").as_double();
+                    double map_origin_lon = get_parameter("map_origin_lon").as_double();
+                    map_origin.latitude = map_origin_lat;
+                    map_origin.longitude = map_origin_lon;
+                    map_origin_pub_->publish(map_origin);
+                    publish_map_to_odom_tf(map_origin_lat, map_origin_lon, time);
+                } else {
+                    map_origin_pub_->publish(get_navsatfix_message(data, time));
+                    publish_map_to_odom_tf(data.latitude, data.longitude, time);
+                }
                 publish_foxglove_vis_frame(time);
+                odom_origin_pub_->publish(get_navsatfix_message(data, time));
                 kmbinary_pub_->publish(get_kmbinary_message(data));
                 diagnostic_pub_->publish(get_diagnostic_array(data, time));
                 nav_pub_->publish(get_navsatfix_message(data, time));
                 odom_pub_->publish(get_odometry_message(data, time));
                 publish_dyn_tf(data, time);  
                         
-
-                break;
+                timer_ = this->create_wall_timer(std::chrono::milliseconds(10), std::bind(&Driver::timer_callback, this));
+                return;
             }
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
-    }
-
-    void Driver::initial_setup()
-    {
-        reset_origin();
-        // Start the timer callback loop after the origin is set
-        timer_ = this->create_wall_timer(std::chrono::milliseconds(10), std::bind(&Driver::timer_callback, this));
     }
 
     void Driver::timer_callback()
@@ -113,12 +124,33 @@ namespace seapath
         // Respond to the request
         response->success = true;
         response->message = "Origin reset successfully";
-
-        RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "Setting global origin to: " << origin_lat_ << ", " << origin_lon_ << ", " << origin_h_ << "\n");
-
-        // Start the timer callback loop after the origin is set
-        timer_ = this->create_wall_timer(std::chrono::milliseconds(10), std::bind(&Driver::timer_callback, this));
         return;
+    }
+
+    void Driver::publish_map_to_odom_tf(double map_lat, double map_lon, const rclcpp::Time& time) const
+        {
+        // Setup the transform
+        geometry_msgs::msg::TransformStamped transformStamped;
+
+        transformStamped.header.stamp = time;
+        transformStamped.header.frame_id = "map";
+        transformStamped.child_frame_id = "odom";
+
+        // ikke riktig
+        auto [x, y, z] = lla2flat(map_lat, map_lon, 0.0);
+
+        transformStamped.transform.translation.x = x;
+        transformStamped.transform.translation.y = y;
+        transformStamped.transform.translation.z = z;
+
+        transformStamped.transform.rotation.x = 0.0;
+        transformStamped.transform.rotation.y = 0.0;
+        transformStamped.transform.rotation.z = 0.0;
+        transformStamped.transform.rotation.w = 1.0;
+
+        // Broadcast the static transform
+        static_tf_broadcaster_->sendTransform(transformStamped);
+
     }
 
     void Driver::publish_foxglove_vis_frame(const rclcpp::Time& time) const
@@ -146,11 +178,11 @@ namespace seapath
 
     void Driver::set_origin(const KMBinaryData& data)
     {
-        origin_lat_ = data.latitude;
-        origin_lon_ = data.longitude;
-        origin_h_ = data.ellipsoid_height;
+        odom_origin_lat_ = data.latitude;
+        odom_origin_lon_ = data.longitude;
+        odom_origin_h_ = data.ellipsoid_height;
         origin_set_ = true;
-        RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "Setting global origin to: " << origin_lat_ << ", " << origin_lon_ << ", " << origin_h_ << "\n");
+        RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "Setting odom origin to: " << odom_origin_lat_ << ", " << odom_origin_lon_ << ", " << odom_origin_h_ << "\n");
     }
 
     
@@ -242,7 +274,7 @@ namespace seapath
         nav_msgs::msg::Odometry odom_msg;
         odom_msg.header.stamp = time;
 
-        odom_msg.header.frame_id = "world"; // This is the reference coordinate frame with respect to which the pose and velocity are being represented.
+        odom_msg.header.frame_id = "odom"; // This is the reference coordinate frame with respect to which the pose and velocity are being represented.
         odom_msg.child_frame_id = "seapath"; // This represents the coordinate frame of the vehicle
        
         auto [x, y, z] = lla2flat(data.latitude, data.longitude, data.ellipsoid_height);
@@ -387,8 +419,8 @@ namespace seapath
         // Convert angles from degrees to radians
         const double lat_rad = deg2rad(lat);
         const double lon_rad = deg2rad(lon);
-        const double origin_lat_rad = deg2rad(origin_lat_);
-        const double origin_lon_rad = deg2rad(origin_lon_);
+        const double origin_lat_rad = deg2rad(odom_origin_lat_);
+        const double origin_lon_rad = deg2rad(odom_origin_lon_);
 
         // Calculate delta latitude and delta longitude in radians
         const double dlat = lat_rad - origin_lat_rad;
@@ -407,47 +439,54 @@ namespace seapath
         // Transformation from North-East to flat x-y coordinates
         const double px = cos(psi_rad) * dN - sin(psi_rad) * dE;
         const double py = sin(psi_rad) * dN + cos(psi_rad) * dE;
-        const double pz = origin_h_ - alt; // Flat Earth z-axis value (downwards positive, NED)
+        const double pz = odom_origin_h_ - alt; // Flat Earth z-axis value (downwards positive, NED)
 
         return {px, py, pz};
     }
 
 
-    void Driver::publish_dyn_tf(const KMBinaryData& data, const rclcpp::Time& time) const 
+    void Driver::publish_dyn_tf(const KMBinaryData& data, const rclcpp::Time& time) const
     {
-        auto [x, y, z] = lla2flat(data.latitude, data.longitude, data.ellipsoid_height);
-        tf2::Transform transform;
-        transform.setOrigin(tf2::Vector3(x, y, z));
+    auto [x, y, z] = lla2flat(data.latitude, data.longitude, data.ellipsoid_height);
+    tf2::Transform transform;
+    transform.setOrigin(tf2::Vector3(x, y, z));
 
-        transform.setRotation(tf2::Quaternion(0, 0, 0, 1));
+    std::vector<geometry_msgs::msg::TransformStamped> transforms;
 
-        geometry_msgs::msg::TransformStamped transform_msg;
-        transform_msg.transform = tf2::toMsg(transform);
-        transform_msg.header.stamp = time;
-        transform_msg.header.frame_id = "world";
-        transform_msg.child_frame_id = "vehicle";
-        tf_broadcaster_->sendTransform(transform_msg);
+    // First transform with neutral rotation
+    geometry_msgs::msg::TransformStamped transform_msg;
+    transform.setRotation(tf2::Quaternion(0, 0, 0, 1)); // Neutral rotation
+    transform_msg.transform = tf2::toMsg(transform);
+    transform_msg.header.stamp = time;
+    transform_msg.header.frame_id = "odom";
+    transform_msg.child_frame_id = "vehicle";
+    transforms.push_back(transform_msg);
 
-        tf2::Quaternion q;
-        q.setRPY(0, 0, deg2rad(data.heading));
-        transform.setRotation(q);
-        transform_msg.transform = tf2::toMsg(transform);
-        transform_msg.child_frame_id = "vehicle-1";
-        tf_broadcaster_->sendTransform(transform_msg);
+    // Second transform with heading rotation
+    tf2::Quaternion q;
+    q.setRPY(0, 0, deg2rad(data.heading));
+    transform.setRotation(q);
+    transform_msg.transform = tf2::toMsg(transform);
+    transform_msg.child_frame_id = "vehicle-1";
+    transforms.push_back(transform_msg);
 
-        q.setRPY(0, deg2rad(data.pitch), deg2rad(data.heading));
-        transform.setRotation(q);
-        transform_msg.transform = tf2::toMsg(transform);
-        transform_msg.child_frame_id = "vehicle-2";
-        tf_broadcaster_->sendTransform(transform_msg);
+    // Third transform with pitch and heading rotation
+    q.setRPY(0, deg2rad(data.pitch), deg2rad(data.heading));
+    transform.setRotation(q);
+    transform_msg.transform = tf2::toMsg(transform);
+    transform_msg.child_frame_id = "vehicle-2";
+    transforms.push_back(transform_msg);
 
-        q.setRPY(deg2rad(data.roll), deg2rad(data.pitch), deg2rad(data.heading));
-        transform.setRotation(q);
-        transform_msg.transform = tf2::toMsg(transform);
-        transform_msg.child_frame_id = "seapath";
-        tf_broadcaster_->sendTransform(transform_msg);
+    // Fourth transform with roll, pitch, and heading rotation
+    q.setRPY(deg2rad(data.roll), deg2rad(data.pitch), deg2rad(data.heading));
+    transform.setRotation(q);
+    transform_msg.transform = tf2::toMsg(transform);
+    transform_msg.child_frame_id = "seapath";
+    transforms.push_back(transform_msg);
 
-    }
+  
+    tf_broadcaster_->sendTransform(transforms);
+}
 
     std::ostream &operator<<(std::ostream &os, const KMBinaryData &data)
     {
