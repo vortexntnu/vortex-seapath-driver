@@ -3,6 +3,6 @@ seapath_ros_driver_node:
     UDP_IP: "10.0.1.10"  # IP of the socket. The socket is currently set to ignore this param and use IP_ADDR_ANY instead. 
     #The socket failed to bind when ip was specified.
     UDP_PORT: 31421
-    use_predef_map_origin: false
-    map_origin_lat: 0.0
-    map_origin_lon: 0.0
+    use_predef_map_origin: true
+    map_origin_lat: 63.43740706620352 # Grillstad origin
+    map_origin_lon: 10.50651310985357
