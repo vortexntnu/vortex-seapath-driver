@@ -29,7 +29,10 @@ namespace seapath
         declare_parameter<bool>("use_predef_map_origin", false);
         declare_parameter<double>("map_origin_lat", 0.0);
         declare_parameter<double>("map_origin_lon", 0.0);
-
+        if(get_parameter("use_predef_map_origin").as_bool()){
+        RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "using predef map_origin_lat: " << get_parameter("map_origin_lat").as_double() << "\n");
+        RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "using predef map_origin_lon: " << get_parameter("map_origin_lon").as_double() << "\n");
+        }
         declare_parameter<std::string>("UDP_IP", "10.0.1.10");
         declare_parameter<u_int16_t>("UDP_PORT", 31421);
 
