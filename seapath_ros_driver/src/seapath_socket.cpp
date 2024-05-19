@@ -18,45 +18,40 @@ namespace seapath
         addr_ = ip;
     }
 
-    // Socket currently set up using INADDR_ANY, which means it will listen to all incoming traffic on the specified port.
     void Socket::create_socket()
     {
-        client_socket_ = socket(AF_INET, SOCK_DGRAM, 0);
-        if (client_socket_ == -1)
+        socket_fd_ = socket(AF_INET, SOCK_DGRAM, 0);
+        if (socket_fd_ == -1)
         {
             throw std::runtime_error("Error creating socket");
         }
 
-        memset(&servaddr_, 0, sizeof(servaddr_));
+        memset(&socketaddr_, 0, sizeof(socketaddr_));
 
         // Set up server address information
-        servaddr_.sin_family = AF_INET;
-        servaddr_.sin_port = htons(port_);
-        // servaddr_.sin_addr.s_addr = inet_addr(addr_.c_str());
-        
-        // Socket failed to bind to the specified address, so it is set to INADDR_ANY
-        servaddr_.sin_addr.s_addr = INADDR_ANY;
+        socketaddr_.sin_family = AF_INET;
+        socketaddr_.sin_port = htons(port_);
+        socketaddr_.sin_addr.s_addr = INADDR_ANY;
     }
 
     void Socket::bind_socket()
     {
         while (true)
         {
-            std::cout << "[INFO] Client socket " << client_socket_ << std::endl;
-            std::cout << "[INFO] Attempting to connect to server " << addr_ << " at port " << port_ << std::endl;
+            std::cout << "[INFO] Attempting to bind socket to port " << port_ << std::endl;
             // Bind the socket with the server address
-            int n = bind(client_socket_, (struct sockaddr *)&servaddr_, sizeof(servaddr_));
+            int n = bind(socket_fd_, (struct sockaddr *)&socketaddr_, sizeof(socketaddr_));
 
             if (n < 0)
             {
                 int timeout_delay = 5;
-                std::cerr << "Error connecting to server! Trying again in " << timeout_delay << " seconds" << std::endl;
+                std::cerr << "Error binding socket! Trying again in " << timeout_delay << " seconds" << std::endl;
                 std::this_thread::sleep_until(std::chrono::system_clock::now() + std::chrono::seconds(timeout_delay));
                 continue;
             }
             else
             {
-                std::cout << "[INFO] Socket setup and ready to receive from address " << addr_ << " at port " << port_ << std::endl;
+                std::cout << "[INFO] Socket setup and ready to receive at port " << port_ << std::endl;
                 break;
             }
         }
@@ -64,14 +59,23 @@ namespace seapath
 
     void Socket::receive_data()
     {
+        struct sockaddr_in senderaddr_;
+        socklen_t senderaddr_len = sizeof(senderaddr_);
         while (true)
         {
-            // Receive data from the server
-            int bytes_read = recv(client_socket_, buffer_.data(), KMB_SIZE, 0);
+            // Receive data at address specified by socketaddr_
+            int bytes_read = recvfrom(socket_fd_, buffer_.data(), KMB_SIZE, 0, (struct sockaddr *)&senderaddr_, &senderaddr_len);
+            if (senderaddr_.sin_addr.s_addr != inet_addr(addr_.c_str()))
+            {
+                std::cerr << "Received data from unknown address. Ignoring." << std::endl;
+                continue;
+            }
 
             if (uint8_t(bytes_read) != KMB_SIZE) // If the packet is not 132 bytes, the socket is re-bound
             {
                 socket_connected_ = false;
+                close_socket();
+                create_socket();
                 bind_socket();
                 continue;
             }
@@ -157,12 +161,12 @@ namespace seapath
     void Socket::close_socket()
     {
         std::cout << "[INFO] Closing connection to server " << addr_ << " at port " << port_ << std::endl;
-        close(client_socket_);
+        close(socket_fd_);
     }
 
     Socket::~Socket()
     {
         std::cout << "[INFO] Closing connection to server " << addr_ << " at port " << port_ << std::endl;
-        close(client_socket_);
+        close(socket_fd_);
     }
 } // namespace seapath

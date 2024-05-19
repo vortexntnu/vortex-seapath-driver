@@ -196,7 +196,7 @@ namespace seapath
         /**
          * @brief Socket file descriptor.
          */
-        int client_socket_;
+        int socket_fd_;
 
         /**
          * @brief IP address of the remote server.
@@ -221,7 +221,7 @@ namespace seapath
         /**
          * @brief Server address structure for socket communication.
          */
-        sockaddr_in servaddr_;
+        sockaddr_in socketaddr_;
 
         bool data_ready_;
 
