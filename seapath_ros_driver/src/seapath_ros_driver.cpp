@@ -90,7 +90,6 @@ namespace seapath
 
     void Driver::timer_callback()
     {
-        std::unique_lock<std::mutex> lock(mutex_);
        if(socket_.get_data_status()){
            auto data = socket_.get_kmbinary_data();
            auto time = this->get_clock()->now();
@@ -118,12 +117,10 @@ namespace seapath
         if(timer_){
         timer_.reset();
         }
-        std::unique_lock<std::mutex> lock(mutex_);
         // Reset the origin coordinates
         origin_set_ = false;
 
         reset_origin();
-        lock.unlock();
         // Respond to the request
         response->success = true;
         response->message = "Origin reset successfully";
@@ -140,7 +137,7 @@ namespace seapath
         transformStamped.child_frame_id = "odom";
 
         // ikke riktig
-        auto [x, y, z] = lla2flat(map_lat, map_lon, 0.0);
+        auto [x, y, z] = lla2flat(map_lat, map_lon, odom_origin_h_);
 
         transformStamped.transform.translation.x = x;
         transformStamped.transform.translation.y = y;

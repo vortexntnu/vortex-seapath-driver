@@ -165,7 +165,6 @@ namespace seapath
       Socket socket_;
       std::string UDP_IP_;
       uint16_t UDP_PORT_;
-      std::mutex mutex_;
 
       bool origin_set_ = false;
       double odom_origin_lat_;
