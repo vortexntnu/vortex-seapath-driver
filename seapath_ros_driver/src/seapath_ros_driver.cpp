@@ -136,7 +136,6 @@ namespace seapath
         transformStamped.header.frame_id = "map";
         transformStamped.child_frame_id = "odom";
 
-        // ikke riktig
         auto [x, y, z] = lla2flat(map_lat, map_lon, odom_origin_h_);
 
         transformStamped.transform.translation.x = x;
@@ -303,9 +302,9 @@ namespace seapath
         odom_msg.twist.twist.linear.y = data.east_velocity;
         odom_msg.twist.twist.linear.z = data.down_velocity;
 
-        odom_msg.twist.twist.angular.x = data.roll_rate;
-        odom_msg.twist.twist.angular.y = data.pitch_rate;
-        odom_msg.twist.twist.angular.z = data.yaw_rate;
+        odom_msg.twist.twist.angular.x = deg2rad(data.roll_rate);
+        odom_msg.twist.twist.angular.y = deg2rad(data.pitch_rate);
+        odom_msg.twist.twist.angular.z = deg2rad(data.yaw_rate);
 
         odom_msg.twist.covariance[0] = data.latitude_error * data.latitude_error;
         odom_msg.twist.covariance[7] = data.longitude_error * data.longitude_error;
