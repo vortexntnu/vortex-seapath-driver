@@ -60,6 +60,10 @@ namespace seapath
             if (socket_.get_data_status()) {
                 auto data = socket_.get_kmbinary_data();
                 auto time = this->get_clock()->now();
+                if(!data.status_ok()){
+                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                    continue;
+                }
                 set_origin(data);
                 if(get_parameter("use_predef_map_origin").as_bool()){
                     auto map_origin = get_navsatfix_message(data, time);

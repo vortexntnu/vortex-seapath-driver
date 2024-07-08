@@ -131,6 +131,10 @@ namespace seapath
         return determineOverallStatus() != DiagnosticStatus::INVALID;
     }
 
+    bool status_ok() const {
+        return determineOverallStatus() == DiagnosticStatus::OK;
+    }
+
     };
 
     /**
