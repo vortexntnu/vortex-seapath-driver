@@ -270,11 +270,20 @@ namespace seapath
 
     nav_msgs::msg::Odometry Driver::get_odometry_message(const KMBinaryData& data, const rclcpp::Time& time) const
     {
+        // nav_msgs/Odometry - All pose data (position and orientation) is transformed from the message header’s frame_id 
+        // into the coordinate frame specified by the world_frame parameter (typically map or odom). 
+        // In the message itself, this specifically refers to everything contained within the pose property. 
+        // All twist data (linear and angular velocity) is transformed from the child_frame_id of the message 
+        // into the coordinate frame specified by the base_link_frame parameter (typically base_link).
+
+        // As of 2024 Freya only uses the seapath for state estimation. Therefore the frame_id is of this message is directly set to the "odom" frame.
+        // The child_frame_id is set to "seapath" to represent the coordinate frame with respect to which the linear and angular velocity are being represented.
+        // The tf.launch.py launch file in "vortex-asv/asv_setup" defines the static transformation from the "seapath" frame to the "base_link" frame.
         nav_msgs::msg::Odometry odom_msg;
         odom_msg.header.stamp = time;
 
-        odom_msg.header.frame_id = "odom"; // This is the reference coordinate frame with respect to which the pose and velocity are being represented.
-        odom_msg.child_frame_id = "seapath"; // This represents the coordinate frame of the vehicle
+        odom_msg.header.frame_id = "odom";
+        odom_msg.child_frame_id = "seapath";
        
         auto [x, y, z] = lla2flat(data.latitude, data.longitude, data.ellipsoid_height);
 
@@ -298,9 +307,18 @@ namespace seapath
         odom_msg.pose.covariance[28] = data.pitch_error * data.pitch_error;
         odom_msg.pose.covariance[35] = data.heading_error * data.heading_error;
 
-        odom_msg.twist.twist.linear.x = data.north_velocity;
-        odom_msg.twist.twist.linear.y = data.east_velocity;
-        odom_msg.twist.twist.linear.z = data.down_velocity;
+
+        // Linear velocity in the seapath frame (identical to base_link frame)
+        tf2::Vector3 linear_velocity_ned(data.north_velocity, data.east_velocity, data.down_velocity);
+
+         // Transform linear velocity to the base_link frame
+        tf2::Quaternion orientation_q;
+        tf2::convert(odom_msg.pose.pose.orientation, orientation_q);
+        tf2::Vector3 linear_velocity_base_link = tf2::quatRotate(orientation_q.inverse(), linear_velocity_ned);
+
+        odom_msg.twist.twist.linear.x = linear_velocity_base_link.x();
+        odom_msg.twist.twist.linear.y = linear_velocity_base_link.y();
+        odom_msg.twist.twist.linear.z = linear_velocity_base_link.z();
 
         odom_msg.twist.twist.angular.x = deg2rad(data.roll_rate);
         odom_msg.twist.twist.angular.y = deg2rad(data.pitch_rate);
