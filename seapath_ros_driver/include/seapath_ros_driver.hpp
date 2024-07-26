@@ -56,16 +56,6 @@ namespace seapath
        */
       void setup_socket();
 
-
-
-      /**
-       * @brief Sets the initial origin from the world frame and initiates the timer callback once origin is set.
-       *
-       *
-       */
-      void initial_setup();
-
-
       /**
        * @brief Timer callback function that retrieves KMBinaryData, then publishes it.
        */
@@ -76,6 +66,8 @@ namespace seapath
        *
        */
       void publish_foxglove_vis_frame(const rclcpp::Time& time) const;
+
+      void publish_map_to_odom_tf(double map_lat, double map_lon, const rclcpp::Time& time) const;
 
       /**
        * @brief Get the diagnostic array object message.
@@ -163,7 +155,8 @@ namespace seapath
       rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
       rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr diagnostic_pub_;
       rclcpp::Publisher<sensor_msgs::msg::NavSatFix>::SharedPtr nav_pub_;
-      rclcpp::Publisher<sensor_msgs::msg::NavSatFix>::SharedPtr origin_pub_;
+      rclcpp::Publisher<sensor_msgs::msg::NavSatFix>::SharedPtr map_origin_pub_;
+      rclcpp::Publisher<sensor_msgs::msg::NavSatFix>::SharedPtr odom_origin_pub_;
       rclcpp::Publisher<vortex_msgs::msg::KMBinary>::SharedPtr kmbinary_pub_;
       std::shared_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
       std::shared_ptr<tf2_ros::StaticTransformBroadcaster> static_tf_broadcaster_;
@@ -172,13 +165,11 @@ namespace seapath
       Socket socket_;
       std::string UDP_IP_;
       uint16_t UDP_PORT_;
-      std::mutex mutex_;
-
 
       bool origin_set_ = false;
-      double origin_lat_ = -100;
-      double origin_lon_ = -100;
-      float origin_h_ = -100;
+      double odom_origin_lat_;
+      double odom_origin_lon_;
+      float odom_origin_h_;
    };
 
    std::ostream &operator<<(std::ostream &os, const KMBinaryData &data);
