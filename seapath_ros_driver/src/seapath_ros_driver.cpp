@@ -162,8 +162,8 @@ namespace seapath
         geometry_msgs::msg::TransformStamped transformStamped;
 
         transformStamped.header.stamp = time;
-        transformStamped.header.frame_id = "world";
-        transformStamped.child_frame_id = "world_foxglove";
+        transformStamped.header.frame_id = "map";
+        transformStamped.child_frame_id = "map_visualization";
 
         transformStamped.transform.translation.x = 0.0;
         transformStamped.transform.translation.y = 0.0;
