@@ -13,26 +13,17 @@ namespace seapath
         auto qos_transient_local = rclcpp::QoS(rclcpp::QoSInitialization(qos_profile_transient_local.history, 1), qos_profile_transient_local);
 
         diagnostic_pub_ = this->create_publisher<diagnostic_msgs::msg::DiagnosticArray>("/diagnostics", qos_transient_local);
-        map_origin_pub_ = this->create_publisher<sensor_msgs::msg::NavSatFix>("/map/origin", qos_transient_local);
         odom_origin_pub_ = this->create_publisher<sensor_msgs::msg::NavSatFix>("/odom/origin", qos_transient_local);
 
         odom_pub_ = this->create_publisher<nav_msgs::msg::Odometry>("/seapath/odom/ned", qos_sensor_data);
         nav_pub_ = this->create_publisher<sensor_msgs::msg::NavSatFix>("/seapath/navsatfix", qos_sensor_data);
         kmbinary_pub_ = this->create_publisher<vortex_msgs::msg::KMBinary>("/seapath/KMBinary", qos_sensor_data);
         tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
-        static_tf_broadcaster_ = std::make_unique<tf2_ros::StaticTransformBroadcaster>(*this);
 
         // Initialize the reset origin service server
         reset_origin_service_ = this->create_service<std_srvs::srv::Trigger>(
             "reset_origin", std::bind(&Driver::reset_origin_callback, this, std::placeholders::_1, std::placeholders::_2));
 
-        declare_parameter<bool>("use_predef_map_origin", false);
-        declare_parameter<double>("map_origin_lat", 0.0);
-        declare_parameter<double>("map_origin_lon", 0.0);
-        if(get_parameter("use_predef_map_origin").as_bool()){
-        RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "using predef map_origin_lat: " << get_parameter("map_origin_lat").as_double() << "\n");
-        RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "using predef map_origin_lon: " << get_parameter("map_origin_lon").as_double() << "\n");
-        }
         declare_parameter<std::string>("UDP_IP", "10.0.1.10");
         declare_parameter<u_int16_t>("UDP_PORT", 31421);
 
@@ -65,19 +56,6 @@ namespace seapath
                     continue;
                 }
                 set_origin(data);
-                if(get_parameter("use_predef_map_origin").as_bool()){
-                    auto map_origin = get_navsatfix_message(data, time);
-                    double map_origin_lat = get_parameter("map_origin_lat").as_double();
-                    double map_origin_lon = get_parameter("map_origin_lon").as_double();
-                    map_origin.latitude = map_origin_lat;
-                    map_origin.longitude = map_origin_lon;
-                    map_origin_pub_->publish(map_origin);
-                    publish_map_to_odom_tf(map_origin_lat, map_origin_lon, time);
-                } else {
-                    map_origin_pub_->publish(get_navsatfix_message(data, time));
-                    publish_map_to_odom_tf(data.latitude, data.longitude, time);
-                }
-                publish_foxglove_vis_frame(time);
                 odom_origin_pub_->publish(get_navsatfix_message(data, time));
                 kmbinary_pub_->publish(get_kmbinary_message(data));
                 diagnostic_pub_->publish(get_diagnostic_array(data, time));
@@ -129,54 +107,6 @@ namespace seapath
         response->success = true;
         response->message = "Origin reset successfully";
         return;
-    }
-
-    void Driver::publish_map_to_odom_tf(double map_lat, double map_lon, const rclcpp::Time& time) const
-        {
-        // Setup the transform
-        geometry_msgs::msg::TransformStamped transformStamped;
-
-        transformStamped.header.stamp = time;
-        transformStamped.header.frame_id = "map";
-        transformStamped.child_frame_id = "odom";
-
-        auto [x, y, z] = lla2flat(map_lat, map_lon, odom_origin_h_);
-
-        transformStamped.transform.translation.x = x;
-        transformStamped.transform.translation.y = y;
-        transformStamped.transform.translation.z = z;
-
-        transformStamped.transform.rotation.x = 0.0;
-        transformStamped.transform.rotation.y = 0.0;
-        transformStamped.transform.rotation.z = 0.0;
-        transformStamped.transform.rotation.w = 1.0;
-
-        // Broadcast the static transform
-        static_tf_broadcaster_->sendTransform(transformStamped);
-
-    }
-
-    void Driver::publish_foxglove_vis_frame(const rclcpp::Time& time) const
-        {
-        // Setup the transform
-        geometry_msgs::msg::TransformStamped transformStamped;
-
-        transformStamped.header.stamp = time;
-        transformStamped.header.frame_id = "map";
-        transformStamped.child_frame_id = "map_visualization";
-
-        transformStamped.transform.translation.x = 0.0;
-        transformStamped.transform.translation.y = 0.0;
-        transformStamped.transform.translation.z = 0.0;
-        // NED to SEU
-        transformStamped.transform.rotation.x = 0.0;
-        transformStamped.transform.rotation.y = 1.0;
-        transformStamped.transform.rotation.z = 0.0;
-        transformStamped.transform.rotation.w = 0.0;
-
-        // Broadcast the static transform
-        static_tf_broadcaster_->sendTransform(transformStamped);
-
     }
 
     void Driver::set_origin(const KMBinaryData& data)
