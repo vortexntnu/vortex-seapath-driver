@@ -29,7 +29,6 @@
 #include "tf2/LinearMath/Quaternion.h"
 #include "tf2_ros/transform_broadcaster.h"
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
-#include <tf2_ros/static_transform_broadcaster.h>
 
 using std::placeholders::_1;
 using namespace std::chrono_literals;
@@ -60,14 +59,6 @@ namespace seapath
        * @brief Timer callback function that retrieves KMBinaryData, then publishes it.
        */
       void timer_callback(); 
-
-      /**
-       * @brief Publishes static transform from world NED to world SEU to use for foxglove visualization.
-       *
-       */
-      void publish_foxglove_vis_frame(const rclcpp::Time& time) const;
-
-      void publish_map_to_odom_tf(double map_lat, double map_lon, const rclcpp::Time& time) const;
 
       /**
        * @brief Get the diagnostic array object message.
@@ -155,11 +146,9 @@ namespace seapath
       rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
       rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr diagnostic_pub_;
       rclcpp::Publisher<sensor_msgs::msg::NavSatFix>::SharedPtr nav_pub_;
-      rclcpp::Publisher<sensor_msgs::msg::NavSatFix>::SharedPtr map_origin_pub_;
       rclcpp::Publisher<sensor_msgs::msg::NavSatFix>::SharedPtr odom_origin_pub_;
       rclcpp::Publisher<vortex_msgs::msg::KMBinary>::SharedPtr kmbinary_pub_;
       std::shared_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
-      std::shared_ptr<tf2_ros::StaticTransformBroadcaster> static_tf_broadcaster_;
       std::shared_ptr<rclcpp::Service<std_srvs::srv::Trigger>> reset_origin_service_;
       rclcpp::TimerBase::SharedPtr timer_;
       Socket socket_;
