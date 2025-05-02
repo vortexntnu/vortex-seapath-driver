@@ -7,9 +7,6 @@
 
   - The driver then publishes the data gathered over the ROS2 network in various publishers.
 
-## Subscriber of
-- [`None`]
-
 ## Publishers of
 
 - [`/diagnostic`]
@@ -102,8 +99,8 @@
 
 - ### `set_origin`
 
- - #### Service tipe
+  - #### Service tipe
     This service is a service-trigger: it don't need input and as output it give a boolean value to ensure success or failure of the service and mesagge with more details
 
- - #### Function
+  - #### Function
     Save current position as origin frame
