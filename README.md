@@ -31,8 +31,8 @@
   
   - #### Function
   
-    - Provide informatiotion regard status of the hardware connection and the quality of the data it receives
-    - In case of error it contain also the error's name and message
+    - Provide information regarding the status of the hardware connection and the quality of the data it receives.
+    - In case of an error, it also contains the error's name and message.
 
 - ### `/odom/origin`
 
@@ -41,7 +41,7 @@
   | **Message type**   | [`sensor_msgs/NavSatFix`](https://docs.ros.org/en/noetic/api/sensor_msgs/html/msg/NavSatFix.html) |
   
    - #### Function
-      - Provide the position of the origin frame in world frame
+      - Provide the position of the origin frame in the world frame.
 
 - ### `/seapath/odom/ned`
 
@@ -65,7 +65,7 @@
   
   - #### Function
   
-    - It provide the raw data from GNSS
+    - It provides the raw data from the GNSS.
 
 
 - ### `/seapath/navsatfix`
@@ -76,20 +76,20 @@
   
    - #### Function
   
-      - Provide the current position in the world frame, in particular returns coordinates in latitude and longitude
+      - Provides the current position in the world frame; in particular, it returns coordinates in latitude and longitude.
   
 ## Broadcast
 - ### `/tf`
 
   - #### message
-    - Trasformation matrix from the world frame to the vehicle frame, computed using a quaternion
+    - Transformation matrix from the world frame to the vehicle frame, computed using a quaternion.
 
 ## Service
 
 - ### `set_origin`
 
   - #### Service type
-    - This service is a service-trigger: it don't need input and as output it give a boolean value to ensure success or failure of the service and mesagge with more details
+    - This service is a trigger-type service: it doesn't require any input and returns a boolean value to indicate success or failure, along with a message containing more details.
 
   - #### Function
-    - Save current position as frame origin
+    - Save the current position as the frame origin.
