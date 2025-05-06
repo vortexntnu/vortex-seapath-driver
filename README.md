@@ -1,4 +1,4 @@
-# [Seapath_ros_driver_node]
+# Seapath_ros_driver_node
 
 ## Goal
   - Driver for extracting data from the Seapath 13x OEM
@@ -9,17 +9,17 @@
 
 ## Publishers of
 
-- [`/diagnostic`]
-- [`/odom/origin`]
-- [`/seapath/odom/ned`]
-- [`/seapath/kmbinary`]
-- [`/seapath/navsatfix`]
+- `/diagnostic`
+- `/odom/origin`
+- `/seapath/odom/ned`
+- `/seapath/kmbinary`
+- `/seapath/navsatfix`
 
 ## Broadcast
-- [`/tf`]
+- `/tf`
 
 ## Service
-- [`set_origin`]
+- `set_origin`
 
 ## Topics
 
