@@ -12,7 +12,7 @@
 - [`/diagnostic`]
 - [`/odom/origin`]
 - [`/seapath/odom/ned`]
-- [`/seapath/kmbinari`]
+- [`/seapath/kmbinary`]
 - [`/seapath/navsatfix`]
 
 ## Broadcast
@@ -32,7 +32,7 @@
   - #### Function
   
     - Provide informatiotion regard status of the hardware connection and the quality of the data it receives
-    - In case of error it contain also his name and message
+    - In case of error it contain also the error's name and message
 
 - ### `/odom/origin`
 
@@ -82,7 +82,7 @@
 - ### `/tf`
 
   - #### message
-    - Rotation matrix from the world frame to the vehicle frame, computed using a quaternion
+    - Trasformation matrix from the world frame to the vehicle frame, computed using a quaternion
 
 ## Service
 
