@@ -32,7 +32,7 @@
   - #### Function
   
     - Provide information regarding the status of the hardware connection and the quality of the data it receives.
-    - In case of an error, it also contains the error's name and message.
+    - In case of an error, it also includes the error's name and message.
 
 - ### `/odom/origin`
 
@@ -41,7 +41,7 @@
   | **Message type**   | [`sensor_msgs/NavSatFix`](https://docs.ros.org/en/noetic/api/sensor_msgs/html/msg/NavSatFix.html) |
   
    - #### Function
-      - Provide the position of the origin frame in the world frame.
+      - Provide the position of the frame origin in the world frame.
 
 - ### `/seapath/odom/ned`
 
